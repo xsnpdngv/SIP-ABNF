@@ -1,0 +1,3386 @@
+; Fully Resolved Augmented BNF Syntax Definition of SIP Messages
+;
+; This ABNF syntax defines the structure of SIP messages, primarily
+; based on the representation provided at:
+; https://www.tech-invite.com/y-sip/tinv-rfc-SIP-abnf.html as of March
+; 2025.
+;
+; It incorporates the syntax from RFC 3261 and other related RFCs,
+; ensuring all referenced rules are fully resolved for a complete and
+; self-contained definition.
+;
+; This definition is suitable for actually checking SIP message syntax
+; with an appropriate tool, e.g., https://github.com/xsnpdngv/synx
+
+
+SIP-message =
+    Request /  Response
+Request =
+    Request-Line  *( message-header )  CRLF  [ message-body ]
+    ; Here is an example:
+    ; INVITE sip:bob@biloxi.example.com SIP/2.0
+    ; Via: SIP/2.0/TCP client.atlanta.example.com:5060
+    ; ;branch=z9hG4bK74bf9
+    ; Max-Forwards: 70
+    ; From: Alice <sip:alice@atlanta.example.com>
+    ; ;tag=9fxced76sl
+    ; To: Bob <sip:bob@biloxi.example.com>
+    ; Call-ID: 3848276298220188511@atlanta.example.com
+    ; CSeq: 1 INVITE
+    ; Contact: <sip:alice@client.atlanta.example.com;transport=tcp>
+    ; Content-Type: application/sdp
+    ; Content-Length: 151
+    ;
+    ; v=0
+    ; o=alice  2890844526  2890844526  IN IP4 client.atlanta.example.com
+    ; s=-
+    ; c=IN  IP4  192.0.2.101
+    ; t=0 0
+    ; m=audio  49172  RTP/AVP 0
+    ; a=rtpmap:0  PCMU/8000
+
+Response =
+    Status-Line  *(  message-header )  CRLF  [ message-body ]
+    ; Here is an example:
+    ; SIP/2.0 180 Ringing
+    ; Via: SIP/2.0/TCP  client.atlanta.example.com:5060
+    ; ;branch=z9hG4bK74bf9
+    ; ;received=192.0.2.101
+    ; From: Alice  <sip:alice@atlanta.example.com>
+    ; ;tag=9fxced76sl
+    ; To: Bob  <sip:bob@biloxi.example.com>
+    ; ;tag=8321234356
+    ; Call-ID: 3848276298220188511@atlanta.example.com
+    ; CSeq: 1 INVITE
+    ; Contact: <sip:bob@client.biloxi.example.com;transport=tcp>
+    ; Content-Length: 0
+
+Request-Line =
+    Method  SP  Request-URI  SP  SIP-Version  CRLF
+Status-Line =
+    SIP-Version  SP  Status-Code  SP  Reason-Phrase  CRLF
+
+Method =
+    INVITEm /  ACKm /  OPTIONSm /  BYEm /  CANCELm /  REGISTERm /  INFOm /
+    PRACKm /  SUBSCRIBEm /  NOTIFYm /  UPDATEm /  MESSAGEm /  REFERm /
+    PUBLISHm /  extension-method
+
+Request-URI =
+    SIP-URI /  SIPS-URI /  absoluteURI
+SIP-Version =
+    "SIP"   "/"   1*DIGIT  "."   1*DIGIT
+Reason-Phrase =
+    *( reserved /  unreserved /  escaped /  UTF8-NONASCII /  UTF8-CONT /  SP /  HTAB )
+message-header =
+    ( Accept /  Accept-Contact /  Accept-Encoding /  Accept-Language /
+    Accept-Resource-Priority /
+    ; Additional-Identity /
+    Alert-Info /
+    ; AlertMsg-Error /
+    Allow /  Allow-Events /  Answer-Mode /
+    Attestation-Info /  Authentication-Info / Authorization /  Call-ID /
+    Call-Info /  Cellular-Network-Info /  Contact /  Content-Disposition /
+    Content-Encoding / Content-ID /  Content-Language /
+    Content-Length /  Content-Type /  CSeq /  Date /  Error-Info /
+    Event /  Expires /  Feature-Caps /  Flow-Timer /  From /
+    Geolocation /  Geolocation-Error /  Geolocation-Routing /
+    History-Info /  Identity /
+    ; deprecated by RFC 8224: Identity-Info /
+    Info-Package /
+    In-Reply-To /  Join /  Max-Breadth /  Max-Forwards /  MIME-Version /
+    Min-Expires /  Min-SE /  Organization /  Origination-Id /
+    P-Access-Network-Info /  P-Answer-State /  P-Asserted-Identity /
+    P-Asserted-Service /  P-Associated-URI /  P-Called-Party-ID /
+    P-Charge-Info /  P-Charging-Function-Addresses /  P-Charging-Vector /
+    P-DCS-Billing-Info /  P-DCS-LAES /  P-DCS-OSPS /  P-DCS-Redirect /
+    P-DCS-Trace-Party-ID /  P-Early-Media /  P-Media-Authorization /
+    P-Preferred-Identity /  P-Preferred-Service /
+    P-Private-Network-Indication /  P-Profile-Key /  P-Refused-URI-List /
+    P-Served-User /  P-User-Database /  P-Visited-Network-ID /  Path /
+    Permission-Missing /  Policy-Contact /  Policy-ID /  Priority /
+    Priority-Share /
+    ; Priority-Verstat /
+    Privacy /  Priv-Answer-Mode /
+    Proxy-Authenticate /  Proxy-Authorization /  Proxy-Require /  RAck /
+    Reason /  Record-Route /  Recv-Info /  Refer-Events-At /  Refer-Sub /
+    Refer-To /  Referred-By /  Reject-Contact /  Relayed-Charge /
+    Replaces /  Reply-To /  Request-Disposition /  Require /
+    Resource-Priority /  Resource-Share /  Response-Source /
+    Restoration-Info /  Retry-After /  Route /  RSeq /  Security-Client /
+    Security-Server /  Security-Verify /  Server / Service-Interact-Info /
+    Service-Route /  Session-Expires / Session-ID /  SIP-ETag /
+    SIP-If-Match /  Subject / Subscription-State /  Supported /
+    Suppress-If-Match / Target-Dialog /  Timestamp /  To /  Trigger-Consent /
+    Unsupported / User-Agent /  User-to-User /  Via /  Warning /
+    WWW-Authenticate / extension-header )  CRLF
+message-body =
+    *OCTET
+extension-header =
+    header-name   HCOLON   header-value
+header-name =
+    token
+header-value =
+    *( TEXT-UTF8char /  UTF8-CONT /  LWS )
+extension-method =
+    token
+INVITEm =
+    %x49.4E.56.49.54.45
+    ; INVITE in caps  
+    ;  RFC 6026 - Section 9
+ACKm =
+    %x41.43.4B
+    ; ACK in caps  
+OPTIONSm =
+    %x4F.50.54.49.4F.4E.53
+    ; OPTIONS in caps
+BYEm =
+    %x42.59.45
+    ; BYE in caps
+CANCELm =
+    %x43.41.4E.43.45.4C
+    ; CANCEL in caps
+REGISTERm =
+    %x52.45.47.49.53.54.45.52
+    ; REGISTER in caps
+INFOm =
+    %x49.4E.46.4F
+    ; INFO in caps
+    ;  RFC 6086 - Section 11.1
+PRACKm =
+    %x50.52.41.43.4B
+    ; PRACK in caps
+    ;  RFC 3262 - Section 6
+SUBSCRIBEm =
+    %x53.55.42.53.43.52.49.42.45
+    ; SUBSCRIBE in caps
+    ;  RFC 6665 - Section 8.1.1
+NOTIFYm =
+    %x4E.4F.54.49.46.59
+    ; NOTIFY in caps
+    ;  RFC 6665 - Section 8.1.2
+UPDATEm =
+    %x55.50.44.41.54.45
+    ; UPDATE in caps
+    ;  RFC 3311 - Section 10
+MESSAGEm =
+    %x4D.45.53.53.41.47.45
+    ; MESSAGE in caps
+    ;  RFC 3428 - Section 12
+REFERm =
+    %x52.45.46.45.52
+    ; REFER in caps
+    ;  RFC 3515 - Section 7
+PUBLISHm =
+    %x50.55.42.4C.49.53.48
+    ; PUBLISH in caps
+    ;  RFC 3903 - Section 13.1
+
+; Accept  Header
+; 20.1 - ABNF in 11
+Accept =
+    "Accept"  HCOLON  [ accept-range  *( COMMA  accept-range ) ]
+accept-range =
+    media-range  *( SEMI  accept-param )
+media-range =
+    ( "*/*" /  ( m-type  SLASH  "*" ) / ( m-type  SLASH  m-subtype ) )  *( SEMI  m-parameter )
+
+; Accept-Contact  Header
+; RFC 3841: ABNF in 10
+Accept-Contact =
+    ( "Accept-Contact" /  "a" )  HCOLON  ac-value  *( COMMA  ac-value )
+    ; examples:
+    ; Accept-Contact: *;audio;require
+    ; Accept-Contact: *;video;explicit
+    ; Accept-Contact: *;methods="BYE";class="business";q=1.0
+
+ac-value =
+    "*"  *( SEMI  ac-params )
+ac-params =
+    feature-param /  req-param /  explicit-param /  generic-param
+req-param =
+    "require"
+explicit-param =
+    "explicit"
+
+; Accept-Encoding  Header
+; SIP Header introduced in RFC 3261:
+; see Section 20.2 for the description and Here for the ABNF.
+Accept-Encoding =
+    "Accept-Encoding"  HCOLON  [ encoding  *( COMMA  encoding ) ]
+    ; example:
+    ; Accept-Encoding: gzip
+
+encoding =
+    codings  *( SEMI  accept-param )
+codings =
+    content-coding /  "*"
+
+; Accept-Language  Header
+; SIP Header introduced in RFC 3261: see Section 20.3 for the description and Here for the ABNF.
+Accept-Language =
+    "Accept-Language"  HCOLON  [ language  *( COMMA  language ) ]
+    ; example:
+    ; Accept-Language: da, en-gb;q=0.8, en;q=0.7
+
+language =
+    language-range  *( SEMI  accept-param )
+language-range =
+    (  ( 1*8ALPHA  *( "-"  1*8ALPHA ) ) /  "*" )
+
+; Accept-Resource-Priority  Header
+; SIP Header introduced in RFC 4412: see Section 3.2 for the ABNF.
+Accept-Resource-Priority =
+    "Accept-Resource-Priority"  HCOLON  [ r-value  *( COMMA  r-value ) ]
+    ; example:
+    ; Accept-Resource-Priority: dsn.flash-override,
+    ;  dsn.flash, dsn.immediate, dsn.priority, dsn.routine
+
+
+; Alert-Info  Header
+; SIP Header introduced in RFC 3261: see Section 20.4 for the description and Here for the ABNF.
+; Updated by: RFC 7463 - Section 7.
+Alert-Info =
+    "Alert-Info"  HCOLON  alert-param  *( COMMA  alert-param )
+    ; example:
+    ; Alert-Info: <http://www.example.com/sounds/moo.wav>
+
+alert-param =
+    LAQUOT  absoluteURI  RAQUOT  *( SEMI  ( generic-param /  appearance-param ) )
+appearance-param =
+    "appearance"  EQUAL  1*DIGIT
+
+; Allow  Header
+; SIP Header introduced in RFC 3261: see Section 20.5 for the description and Here for the ABNF.
+Allow =
+    "Allow"  HCOLON  [ Method  *( COMMA  Method ) ]
+    ; example:
+    ; Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY
+
+
+; Allow-Events  Header
+; SIP Header introduced in RFC 6665: see Section 8.2.2 for the ABNF.
+Allow-Events =
+    ( "Allow-Events" /  "u" )  HCOLON  event-type  *( COMMA  event-type )
+    ; example:
+    ; Allow-Events: spirits-INDPs
+
+
+; Answer-Mode  Header
+; SIP Header introduced in RFC 5373: see Section 2 for the ABNF.
+Answer-Mode =
+    "Answer-Mode"  HCOLON  answer-mode-value  *( SEMI  answer-mode-param )
+    ; example:
+    ; Answer-Mode: Manual
+
+answer-mode-value =
+    "Manual" /  "Auto" /  token
+answer-mode-param =
+    "require" /  generic-param
+
+; Attestation-Info  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.18
+Attestation-Info =
+    "Attestation-Info"  HCOLON  attestation-level /  generic-param
+attestation-level =
+    ( "A" /  "B" /  "C" )
+
+; Authentication-Info  Header
+; SIP Header introduced in RFC 3261: see Section 20.6 for the description and Here for the ABNF.
+Authentication-Info =
+    "Authentication-Info"  HCOLON  ainfo  *( COMMA  ainfo )
+    ; example:
+    ; Authentication-Info: nextnonce="47364c23432d2e131a5fb210812c"
+
+ainfo =
+    nextnonce /  message-qop /  response-auth /  cnonce /  nonce-count
+nextnonce =
+    "nextnonce"  EQUAL  nonce-value
+response-auth =
+    "rspauth"  EQUAL  response-digest
+response-digest =
+    LDQUOT  *LHEX  RDQUOT
+
+; Authorization  Header
+; SIP Header introduced in RFC 3261: see Section 20.7 for the description and Here for the ABNF.
+Authorization =
+    "Authorization"  HCOLON  credentials
+    ; example:
+    ; Authorization: Digest username="bob", realm="atlanta.example.com"
+    ;  nonce="ea9c8e88df84f1cec4341ae6cbe5a359", opaque="",
+    ;  uri="sips:ss2.biloxi.example.com",
+    ;  response="dfe56131d1958046689d83306477ecc"
+
+credentials =
+    ( "Digest"  LWS  digest-response ) /  other-response
+digest-response =
+    dig-resp  *( COMMA  dig-resp )
+dig-resp =
+    username /
+    realm /
+    nonce /
+    digest-uri /
+    dresponse /
+    algorithm /   ; see  RFC 3310 - Section 3.1
+    cnonce /
+    opaque /
+    message-qop /
+    nonce-count /
+    auth-param /   ; see  3GPP TS 24.229 - Section 7.2A.2
+    auts   ; see  RFC 3310 - Section 3.4
+username =
+    "username"  EQUAL  username-value
+username-value =
+    quoted-string
+digest-uri =
+    "uri"  EQUAL  LDQUOT  digest-uri-value  RDQUOT
+digest-uri-value =
+    request-uri   ; equal to request-uri as specified by HTTP/1.1
+request-uri = ; RFC 2616
+    "*" / absoluteURI / abs-path / authority
+message-qop =
+    "qop"  EQUAL  qop-value
+cnonce =
+    "cnonce"  EQUAL  cnonce-value
+cnonce-value =
+    nonce-value
+nonce-count =
+    "nc"  EQUAL  nc-value
+nc-value =
+    8LHEX
+dresponse =
+    "response"  EQUAL  request-digest
+request-digest =
+    LDQUOT  32LHEX  RDQUOT
+auth-param =
+    auth-param-name  EQUAL  ( token /  quoted-string )
+auth-param =
+     ; as redefined by 3GPP TS 24.229
+     "integrity-protected"  EQUAL 
+     ( "yes" /  "no" /  "tls-pending" /  "tls-yes" /  "ip-assoc-pending" /  "ip-assoc-yes" /  "auth-done" )
+auth-param-name =
+    token
+auts =
+    "auts"  EQUAL  auts-param
+auts-param =
+    LDQUOT  auts-value  RDQUOT
+auts-value =
+    1*base64-char
+    ; <base64 encoding of AUTS>
+other-response =
+    auth-scheme  LWS  auth-param  *( COMMA  auth-param )
+auth-scheme =
+    token
+
+; Call-ID  Header
+; SIP Header introduced in RFC 3261: see Section 20.8 for the description and Here for the ABNF.
+Call-ID =
+    ( "Call-ID" /  "i" )  HCOLON  callid
+    ; example:
+    ; Call-ID: 3848276298220188511@atlanta.example.com
+
+
+; Call-Info  Header
+; SIP Header introduced in RFC 3261: see Section 20.9 for the description and Here for the ABNF.
+Call-Info =
+    "Call-Info"  HCOLON  info  *( COMMA  info )
+    ; examples:
+    ; Call-Info: <http://www.example.com/alice/photo.jpg> ;purpose=icon,
+    ;  <http://www.example.com/alice/> ;purpose=info
+    ; Call-Info:<sip:456@z.b.com>;purpose=call-completion;m=NR
+
+info =
+    LAQUOT  absoluteURI  RAQUOT  *( SEMI  info-param )
+info-param =
+    ( "purpose"  EQUAL  (
+    "icon" /  "info" /  "card" /
+    "list-management" /  ; see  RFC 5367 - Section 9
+    "call-completion" /  ; see  RFC 6910 - Section 12.4
+    "impp" /  ; see  RFC 6993 - Section 3
+    "ccmp" /  ; see  RFC 7082 - Section 5.1
+    "EmergencyCallData" /  ; see  RFC 7852 - Section 11.2
+    token ) )
+    /  ( "m"  EQUAL  ( "BS" /  "NR" /  "NL" ) )     ; see  RFC 6910 - Section 12.5
+    /  generic-param
+
+; Cellular-Network-Info  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.15
+Cellular-Network-Info =
+    "Cellular-Network-Info"  HCOLON  cellular-net-spec
+cellular-net-spec =
+    access-type  *( SEMI  cellular-access-info )
+access-type =
+    "3GPP-GERAN" /
+    "3GPP-UTRAN-FDD" /
+    "3GPP-UTRAN-TDD" /
+    "3GPP-E-UTRAN-FDD" /
+    "3GPP-E-UTRAN-TDD" /
+    "3GPP2-1X-Femto" /
+    "3GPP2-UMB" /
+    "3GPP2-1X-HRPD" /
+    "3GPP2-1X" /
+    "3GPP-E-UTRAN-ProSe-UNR" /
+    token
+cellular-access-info =
+    access-info /  cell-info-age
+access-info =
+    cgi-3gpp /  utran-cell-id-3gpp /  ci-3gpp2 /  ci-3gpp2-femto /  extension-access-info
+cgi-3gpp =
+    "cgi-3gpp"  EQUAL  ( token /  quoted-string )
+utran-cell-id-3gpp =
+    "utran-cell-id-3gpp"  EQUAL  ( token /  quoted-string )
+ci-3gpp2 =
+    "ci-3gpp2"  EQUAL  ( token /  quoted-string )
+ci-3gpp2-femto =
+    "ci-3gpp2-femto"  EQUAL  ( token /  quoted-string )
+cell-info-age =
+    "cell-info-age"  EQUAL  1*9DIGIT
+extension-access-info =
+    generic-param
+
+; Contact  Header
+; SIP parameter introduced in RFC 3261: see Section 20.10 for the description and Here for the ABNF.
+Contact =
+    ( "Contact" /  "m" )  HCOLON  ( STAR /  ( contact-param  *( COMMA  contact-param ) ) )
+contact-param =
+    ( name-addr /  addr-spec )  *( SEMI  contact-params )
+contact-params =
+    c-p-q /  c-p-expires /  ; see  RFC 3261
+    feature-param /  ; see  RFC 3840 - Section 9
+    c-p-reg /  c-p-instance /  ; see  RFC 5626 - Section 10
+    temp-gruu /  pub-gruu /  ; see  RFC 5627 - Section 7
+    temp-gruu-cookie /  ; see  RFC 6140 - Section 9.3
+    mp-param /  rc-param /  np-param /  ; see  RFC 7044 - Section 14.3
+    contact-extension
+c-p-q =
+    "q"  EQUAL  qvalue
+c-p-expires =
+    "expires"  EQUAL  delta-seconds
+feature-param =
+    enc-feature-tag  [ EQUAL  LDQUOT  ( tag-value-list /  string-value )  RDQUOT ]
+enc-feature-tag =
+    base-tags /  other-tags
+base-tags =
+    "audio" /  "automata" /  "class" /  "duplex" /  "data" /  "control" /  "mobility" /  "description" /  "events" /  "priority" /  "methods" /  "schemes" /  "application" /  "video" /  "language" /  "type" /  "isfocus" /  "actor" /  "text" /  "extensions"
+other-tags =
+    "+"  ftag-name
+ftag-name =
+    ALPHA  *( ALPHA /  DIGIT /  "!" /  "'" /  "." /  "-" /  "%" )
+tag-value-list =
+    tag-value  *( ","  tag-value )
+tag-value =
+    [ "!" ]  ( token-nobang /  boolean /  numeric )
+token-nobang =
+    1*( alphanum /  "-" /  "." /  "%" /  "*" /  "_" /  "+" /  "`" /  "'" /  "~" )
+boolean =
+    "TRUE" /  "FALSE"
+numeric =
+    "#"  numeric-relation  number
+numeric-relation =
+    ">=" /  "<=" /  "=" /  ( number  ":" )
+number =
+    [ "+" /  "-" ]  1*DIGIT  [ "."  0*DIGIT ]
+string-value =
+    "<"  *( qdtext-no-abkt /  quoted-pair )  ">"
+qdtext-no-abkt =
+    LWS /  %x21 /  %x23-3B /  %x3D /  %x3F-5B /  %x5D-7E /  UTF8-NONASCII
+c-p-reg =
+    "reg-id"  EQUAL  1*DIGIT ;  1 to (2^31 - 1)
+c-p-instance =
+    "+sip.instance"  EQUAL  LDQUOT  "<"  instance-val  ">"  RDQUOT
+instance-val =
+    *uric
+temp-gruu =
+    "temp-gruu"  EQUAL  LDQUOT  *( qdtext /  quoted-pair )  RDQUOT
+temp-gruu-cookie =
+    1*base64-char
+    ; To generate a temp-gruu-cookie, the registrar computes:
+    ;
+    ;    SA = HMAC(SK_a, I_i)
+    ;    temp-gruu-cookie = base64enc(I_i || SA)
+    ;
+    ; where || denotes concatenation.  "HMAC" represents any suitably
+    ; strong HMAC algorithm; see RFC 2104 [1] for a discussion of HMAC
+    ; algorithms.  One suitable HMAC algorithm for this purpose is HMAC-
+    ; SHA256-80.
+pub-gruu =
+    "pub-gruu"  EQUAL  LDQUOT  *( qdtext /  quoted-pair )  RDQUOT
+contact-extension =
+    generic-param
+
+; Content-Disposition  Header
+; SIP parameter introduced in RFC 3261: see Section 20.11 for the description and Here for the ABNF.
+; See also: IANA  RFC 2183 - Section 2  RFC 3204 - Section 6, p. 8 (for "handling")
+Content-Disposition =
+    "Content-Disposition"  HCOLON  disp-type  *( SEMI  disp-param )
+    ; example:
+    ; Content-Disposition: session;handling=optional
+
+disp-type =
+    "render" /  "session" /  "icon" /  "alert" /  ; see  RFC 3261
+    "aib" /  ; see  RFC 3893 - Section 2
+    "early-session" /  ; see  RFC 3959 - Section 4
+    "by-reference" /  ; see  RFC 5621 - Section 9.4
+    disp-extension-token
+disp-extension-token =
+    token
+disp-param =
+    handling-param /  generic-param
+handling-param =
+    "handling"  EQUAL  ( "optional" /  "required" /  other-handling )
+other-handling =
+    token
+
+; Content-Encoding  Header
+; SIP Header introduced in RFC 3261: see Section 20.12 for the description and Here for the ABNF.
+Content-Encoding =
+( "Content-Encoding" /  "e" )  HCOLON  content-coding  *( COMMA  content-coding )
+    ; example:
+    ; Content-Encoding: gzip
+
+content-coding =
+    token
+    ; see  IANA
+
+; Content-ID  Header
+; SIP Header introduced in RFC 8262: see Section 3.2 for the ABNF.
+Content-ID =
+    "Content-ID"  HCOLON  msg-id
+    ; example:
+    ; Content-ID: <cn35t8jf02@example.com>
+
+msg-id =
+    "<"  id-left  "@"  id-right  ">"
+
+; from RFC 5322:
+id-left =
+    dot-atom-text / obs-id-left
+id-right =
+    dot-atom-text / no-fold-literal / obs-id-right
+atext =
+    ALPHA / DIGIT /    ; Printable US-ASCII
+    "!" / "#" /        ;  characters not including
+    "$" / "%" /        ;  specials.  Used for atoms.
+    "&" / "'" /
+    "*" / "+" /
+    "-" / "/" /
+    "=" / "?" /
+    "^" / "_" /
+    "`" / "{" /
+    "|" / "}" /
+    "~"
+atom =
+    [CFWS] 1*atext [CFWS]
+dot-atom-text =
+    1*atext *("." 1*atext)
+CFWS =
+    (1*([FWS] comment) [FWS]) / FWS
+FWS =
+    ([*WSP CRLF] 1*WSP) /  obs-FWS ; Folding white space
+obs-FWS =
+    1*WSP *(CRLF 1*WSP)
+obs-id-left =
+    local-part
+obs-id-right =
+    domain
+local-part =
+    dot-atom / quoted-string / obs-local-part
+dot-atom =
+    [CFWS] dot-atom-text [CFWS]
+obs-local-part =
+    word *("." word)
+no-fold-literal =
+    "[" *dtext "]"
+dtext =
+    %d33-90 /   ; Printable US-ASCII
+    %d94-126 /  ;  characters not including
+    obs-dtext   ;  "[", "]", or "\"
+obs-dtext =
+    obs-NO-WS-CTL / quoted-pair
+obs-NO-WS-CTL =
+    %d1-8 /     ; US-ASCII control
+    %d11 /      ;  characters that do not
+    %d12 /      ;  include the carriage
+    %d14-31 /   ;  return, line feed, and
+    %d127       ;  white space characters
+
+domain =
+    dot-atom / domain-literal / obs-domain
+domain-literal =
+    [CFWS] "[" *([FWS] dtext) [FWS] "]" [CFWS]
+obs-domain =
+    atom *("." atom)
+
+; Content-Language  Header
+; SIP Header introduced in RFC 3261: see Section 20.13 for the description and Here for the ABNF.
+Content-Language =
+    "Content-Language"  HCOLON  language-tag  *( COMMA  language-tag )
+    ; example:
+    ; Content-Language: fr
+
+language-tag =
+    primary-tag  *( "-"  subtag )
+primary-tag =
+    1*8ALPHA
+subtag =
+    1*8ALPHA
+
+; Content-Length  Header
+; SIP Header introduced in RFC 3261: see Section 20.14 for the description and Here for the ABNF.
+Content-Length =
+    ( "Content-Length" /  "l" )  HCOLON  1*DIGIT
+    ; example:
+    ; Content-Length: 0
+
+
+; Content-Type  Header
+; SIP Header introduced in RFC 3261: see Section 20.15 for the description and Here for the ABNF.
+Content-Type =
+    ( "Content-Type" /  "c" )  HCOLON  media-type
+    ; example:
+    ; Content-Type: application/sdp
+
+media-type =
+    m-type  SLASH  m-subtype  *( SEMI  m-parameter )
+m-type =
+    discrete-type /  composite-type
+discrete-type =
+    "text" /  "image" /  "audio" /  "video" /  "application" /  extension-token
+composite-type =
+    "message" /  "multipart" /  extension-token
+extension-token =
+    ietf-token /  x-token
+ietf-token =
+    token
+x-token =
+    "x-"  token
+m-subtype =
+    extension-token /  iana-token
+iana-token =
+    token
+m-parameter =
+    m-attribute  EQUAL  m-value
+m-attribute =
+    token
+m-value =
+    token /  quoted-string
+
+; CSeq  Header
+; SIP Header introduced in RFC 3261: see Section 20.16 for the description and Here for the ABNF.
+CSeq =
+    "CSeq"  HCOLON  1*DIGIT  LWS  Method
+    ; example:
+    ; CSeq: 1 INVITE
+
+
+; Date  Header
+; SIP Header introduced in RFC 3261: see Section 20.17 for the description and Here for the ABNF.
+Date =
+    "Date"  HCOLON  SIP-date
+    ; example:
+    ; Date: Thu, 21 Feb 2002 13:02:03 GMT
+
+SIP-date =
+    rfc1123-date
+rfc1123-date =
+    wkday  ","  SP  date1  SP  time  SP  "GMT"
+wkday =
+    "Mon" /  "Tue" /  "Wed" /  "Thu" /  "Fri" /  "Sat" /  "Sun"
+date1 =
+    2DIGIT  SP  month  SP  4DIGIT
+    ;  day month year (e.g., 02 Jun 1982)
+month =
+    "Jan" /  "Feb" /  "Mar" /  "Apr" /  "May" /  "Jun" /  "Jul" /  "Aug" /  "Oct" /  "Nov" /  "Dec"
+time =
+    2DIGIT  ":"  2DIGIT  ":"  2DIGIT
+    ;  e.g., 00:00:00 - 23:59:59
+
+; Error-Info  Header
+; SIP Header introduced in RFC 3261: see Section 20.18 for the description and Here for the ABNF.
+Error-Info =
+    "Error-Info"  HCOLON  error-uri  *( COMMA  error-uri )
+    ; example:
+    ; Error-Info: <sips:screen-failure-term-ann@annoucement.example.com>
+
+error-uri =
+    LAQUOT  absoluteURI  RAQUOT  *( SEMI  generic-param )
+
+; Event  Header
+; SIP Header introduced in RFC 6665: see Section 8.4 for the ABNF.
+; See also: IANA
+Event =
+    ( "Event" /  "o" )  HCOLON  event-type  *( SEMI  event-param )
+    ; example:
+    ; Event: refer
+
+event-type =
+    event-package  *( "."  event-template )
+    ; refer  RFC 3515 - Section 3
+    ; reg  RFC 3680 - Section 4
+    ; message-summary  RFC 3842 - Section 3
+    ; presence  RFC 3856 - Section 6
+    ; winfo   (template)  RFC 3857 - Section 4
+    ; spirits-INDPs  RFC 3910 - Section 5.3.2
+    ; spirits-user-prof  RFC 3910 - Section 6.3
+    ; dialog  RFC 4235 - Section 3
+    ; poc-settings  RFC 4354 - Section 5
+    ; conference  RFC 4575 - Section 3
+    ; kpml  RFC 4730 - Section 4
+    ; consent-pending-additions  RFC 5362 - Section 5
+    ; xcap-diff  RFC 5875 - Section 4
+    ; http-monitor  RFC 5989 - Section 4
+    ; vq-rtcpxr  RFC 6035 - Section 4
+    ; certificate  RFC 6072 - Section 6
+    ; credential  RFC 6072 - Section 7
+    ; ua-profile  RFC 6080 - Section 6
+    ; session-spec-policy  RFC 6795 - Section 3
+    ; call-completion  RFC 6910 - Section 9
+    ; load-control  RFC 7200 - Section 4
+
+event-package =
+    token-nodot
+event-template =
+    token-nodot
+token-nodot =
+    1*( alphanum  /  "-"  /  "!"  /  "%"  /  "*"  /  "_"  /  "+"  /  "`"  /  "'"  /  "~" )
+event-param =
+    generic-param /  ( "id"  EQUAL  token ) /  ; see  RFC 6665 - Section 8.4
+    call-ident /  from-tag /  to-tag /  with-sessd /  ; see  RFC 4235 - Section 3.2
+    body-event-param /  ; see  RFC 5989 - Section 4.2
+    Profile-type /  Vendor /  Model /  Version /  Effective-By /  ; see  RFC 6080 - Sections 6.2.1 - 6.2.2 - 6.2.3
+    max-rate-param /  min-rate-param /  amin-rate-param /  ; see  RFC 6446 - Section 9.2
+    "shared"  ; see  RFC 7463 - Section 13.1
+call-ident =
+    "call-id"  EQUAL  ( token /  DQUOTE  callid  DQUOTE )
+with-sessd =
+    "include-session-description"
+body-event-param =
+    "body"  EQUAL  ( "true" /  "false" )
+Profile-type =
+    "profile-type"  EQUAL  profile-value
+profile-value =
+    profile-types /  token
+profile-types =
+    "device" /  "user" /  "local-network"
+Vendor =
+    "vendor"  EQUAL  quoted-string
+Model =
+    "model"  EQUAL  quoted-string
+Version =
+    "version"  EQUAL  quoted-string
+Effective-By =
+    "effective-by"  EQUAL  1DIGIT
+max-rate-param =
+    "max-rate"  EQUAL  ( 1*2DIGIT  [ "."  1*10DIGIT ] )
+min-rate-param =
+    "min-rate"  EQUAL  ( 1*2DIGIT  [ "."  1*10DIGIT ] )
+amin-rate-param =
+    "adaptive-min-rate"  EQUAL  ( 1*2DIGIT  [ "."  1*10DIGIT ] )
+
+; Expires  Header
+; SIP Header introduced in RFC 3261: see Section 20.19 for the description and Here for the ABNF.
+Expires =
+    "Expires"  HCOLON  delta-seconds
+    ; example:
+    ; Expires: 7200
+
+
+; Feature-Caps  Header
+; SIP Header introduced in RFC 6809: see Section 6 for the ABNF.
+Feature-Caps =
+    "Feature-Caps"  HCOLON  fc-value  *( COMMA  fc-value )
+fc-value =
+    "*"  *( SEMI  feature-cap )
+feature-cap =
+    "+"  fcap-name  [ EQUAL  LDQUOT  ( fcap-value-list  /  fcap-string-value )  RDQUOT ]
+fcap-name =
+    ftag-name
+fcap-value-list =
+    tag-value-list
+fcap-string-value =
+    string-value
+
+; Flow-Timer  Header
+; SIP Header introduced in RFC 5626: see Section 10 for the ABNF.
+Flow-Timer =
+    "Flow-Timer"  HCOLON  1*DIGIT
+    ; example:
+    ; Flow-Timer: 120
+
+
+; From  Header
+; SIP Header introduced in RFC 3261: see Section 20.20 for the description and Here for the ABNF.
+From =
+    ( "From" /  "f" )  HCOLON  from-spec
+    ; examples:
+    ; From: Alice <sip:alice@atlanta.example.com>;tag=9fxced76sl
+    ; From: "Anonymous" <sip:anonymous@anonymous.invalid>;tag=1928301774
+
+from-spec =
+    ( name-addr /  addr-spec )  *( SEMI  from-param )
+from-param =
+    tag-param /  generic-param
+tag-param =
+    "tag"  EQUAL  token
+
+; Geolocation  Header
+; SIP Header introduced in RFC 6442: see Section 4.1 for the ABNF.
+Geolocation =
+    "Geolocation"  HCOLON  locationValue  *( COMMA  locationValue )
+    ; example:
+    ; Geolocation: <cid:target123@atlanta.example.com>
+
+locationValue =
+    LAQUOT  locationURI  RAQUOT  *( SEMI  geoloc-param )
+locationURI =
+    SIP-URI /  SIPS-URI /  absoluteURI /  ; see  RFC 3261
+    pres-URI /  ; see  RFC 3859 - Appendix A
+    http-URI /  https-URI /  ; see  RFC 7230 - Sections 2.7.1 - 2.7.2
+    cid-url  ; not defined here: see  RFC 2392 - Section 2
+pres-URI =
+    "pres:"  [ to ]  [ headers ]
+to =
+    mailbox
+mailbox =
+    name-addr / addr-spec
+headers =
+    "?"  header  *( "&"  header )
+header =
+    hname  "="  hvalue
+hname =
+    *uric
+hvalue =
+    *uric
+geoloc-param =
+    generic-param
+
+http-URI =
+    "http:" "//" authority path-abempty [ "?" query ] [ "#" fragment ]
+https-URI =
+    "https:" "//" authority path-abempty [ "?" query ] [ "#" fragment ]
+path-abempty =
+    *( "/" segment )
+fragment =
+    *( pchar / "/" / "?" )
+query =
+    *( pchar / "/" / "?" )
+
+cid-url =
+    "cid" ":" content-id
+content-id =
+    url-addr-spec
+url-addr-spec =
+    addr-spec
+
+; Geolocation-Error  Header
+; SIP Header introduced in RFC 6442: see Section 4.4 and Section 8.6 for the ABNF.
+Geolocation-Error =
+    "Geolocation-Error"  HCOLON  locationErrorValue
+    ; example:
+    ; Geolocation-Error: 100 ; code="Cannot Process Location"
+
+locationErrorValue =
+    location-error-code  *( SEMI  location-error-params )
+location-error-code =
+    1*3DIGIT
+location-error-params =
+    location-error-code-text /  generic-param
+location-error-code-text =
+    "code"  EQUAL  quoted-string
+    ; 100   "Cannot Process Location"
+    ; 200   "Permission To Use Location Information"
+    ; 201   "Permission To Retransmit Location Information to a Third Party"
+    ; 202   "Permission to Route based on Location Information"
+    ; 300   "Dereference Failure"
+
+; Geolocation-Routing  Header
+; SIP Header introduced in RFC 6442: see Section 4.2 for the ABNF.
+Geolocation-Routing =
+    "Geolocation-Routing"  HCOLON  ( "yes" /  "no" /  generic-value )
+    ; example:
+    ; Geolocation-Routing: no
+
+generic-value =
+    generic-param
+
+; History-Info  Header
+; SIP Header introduced in RFC 7044: see Section 5 for the ABNF.
+History-Info =
+    "History-Info"  HCOLON  hi-entry  *( COMMA  hi-entry )
+hi-entry =
+    hi-targeted-to-uri  *( SEMI  hi-param )
+hi-targeted-to-uri =
+    name-addr
+hi-param =
+    hi-index /  hi-target-param /  hi-extension
+hi-index =
+    "index"  EQUAL  index-val
+index-val =
+    number  *( "."  number )
+number =
+    [ %x31-39  *DIGIT ]  DIGIT
+hi-target-param =
+    rc-param /  mp-param /  np-param
+rc-param =
+    "rc"  EQUAL  index-val
+mp-param =
+    "mp"  EQUAL  index-val
+np-param =
+    "np"  EQUAL  index-val
+hi-extension =
+    generic-param
+
+; Identity  Header
+; SIP Header introduced in RFC 8224: see Section 4 for the ABNF.
+Identity =
+    "Identity"  HCOLON  signed-identity-digest  SEMI  ident-info  *( SEMI  ident-info-params )
+signed-identity-digest =
+    1*( base64-char /  "." )
+ident-info =
+    "info"  EQUAL  ident-info-uri
+ident-info-uri =
+    LAQUOT  absoluteURI  RAQUOT
+ident-info-params =
+    ident-info-alg /  ident-type /  ident-info-extension
+ident-info-alg =
+    "alg"  EQUAL  token
+ident-type =
+    "ppt"  EQUAL  token
+ident-info-extension =
+    generic-param
+base64-char =
+    ALPHA /  DIGIT /  "/" /  "+"
+
+; Identity-Info  Header
+; SIP Header introduced in RFC 4474: see Section 9 for the ABNF.
+; Deprecated by:  RFC 8224 - Section 13.1
+
+; Info-Package  Header
+; SIP Header introduced in RFC 6086: see Section 9.2 for the ABNF.
+Info-Package =
+    "Info-Package"  HCOLON  Info-package-type
+    ; example:
+    ; Info-Package: foo
+
+Info-package-type =
+    Info-package-name  *( SEMI  Info-package-param )
+Info-package-name =
+    token
+Info-package-param =
+    generic-param
+
+; In-Reply-To  Header
+; SIP Header introduced in RFC 3261: see Section 20.21 for the description and Here for the ABNF.
+In-Reply-To =
+    "In-Reply-To"  HCOLON  callid  *( COMMA  callid )
+    ; example:
+    ; In-Reply-To: 70710@saturn.bell-tel.com, 17320@saturn.bell-tel.com
+
+
+; Join  Header
+; SIP Header introduced in RFC 3911: see Section 7 for the ABNF.
+Join =
+    "Join"  HCOLON  callid  *( SEMI  join-param )
+    ; example:
+    ; Join: 12345600@atlanta.example.com;from-tag=1234567;to-tag=23431
+
+join-param =
+    to-tag /  from-tag /  generic-param
+
+; Max-Breadth  Header
+; SIP Header introduced in RFC 5393: see Section 5.1 and Section 5.8
+Max-Breadth =
+    "Max-Breadth"  HCOLON  1*DIGIT
+
+; Max-Forwards  Header
+; SIP Header introduced in RFC 3261: see Section 20.22 for the description and Here for the ABNF.
+Max-Forwards =
+    "Max-Forwards"  HCOLON  1*DIGIT
+    ; example:
+    ; Max-Forwards: 69
+
+
+; MIME-Version  Header
+; SIP Header introduced in RFC 3261: see Section 20.24 for the description and Here for the ABNF.
+MIME-Version =
+    "MIME-Version"  HCOLON  1*DIGIT  "."  1*DIGIT
+    ; example:
+    ; MIME-Version: 1.0
+
+
+; Min-Expires  Header
+; SIP Header introduced in RFC 3261: see Section 20.23 for the description and Here for the ABNF.
+Min-Expires =
+    "Min-Expires"  HCOLON  delta-seconds
+    ; example:
+    ; Min-Expires: 60
+
+
+; Min-SE  Header
+; SIP Header introduced in RFC 4028: see Section 5 for the ABNF.
+Min-SE =
+    "Min-SE"  HCOLON  delta-seconds  *( SEMI  generic-param )
+    ; example:
+    ; Min-SE: 3600
+
+
+; Organization  Header
+; SIP Header introduced in RFC 3261: see Section 20.25 for the description and Here for the ABNF.
+Organization =
+    "Organization"  HCOLON  [ TEXT-UTF8-TRIM ]
+    ; example:
+    ; Organization: Boxes by Bob
+
+
+; Origination-Id  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.19
+Origination-Id =
+    "Origination-Id"  HCOLON  originator
+originator =
+    UUID
+UUID =
+    8HEXDIG 3( "-" 4HEXDIG ) "-" 12HEXDIG
+
+; P-Access-Network-Info  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2A.4 for the ABNF.
+; See also: RFC 7315 - Section 4.4 - Section 5.4   RFC 7913 - Section 2
+P-Access-Network-Info  =
+    "P-Access-Network-Info"  HCOLON  access-net-spec   *( COMMA  access-net-spec )
+access-net-spec =
+    ( access-type /  access-class )   *( SEMI  access-info )
+access-type =
+    "IEEE-802.11" /
+    "IEEE-802.11a" /
+    "IEEE-802.11b" /
+    "IEEE-802.11g" /
+    "IEEE-802.11n" /
+    "IEEE-802.3" /
+    "IEEE-802.3a" /
+    "IEEE-802.3ab" /
+    "IEEE-802.3ae" /
+    "IEEE-802.3ak" /
+    "IEEE-802.3ah" /
+    "IEEE-802.3aq" /
+    "IEEE-802.3an" /
+    "IEEE-802.3e" /
+    "IEEE-802.3i" /
+    "IEEE-802.3j" /
+    "IEEE-802.3u" /
+    "IEEE-802.3y" /
+    "IEEE-802.3z" /
+    "3GPP-GERAN" /
+    "3GPP-UTRAN-FDD" /
+    "3GPP-UTRAN-TDD" /
+    "3GPP-E-UTRAN-FDD" /
+    "3GPP-E-UTRAN-TDD" /
+    "3GPP2-1X-Femto" /
+    "3GPP2-UMB" /
+    "3GPP2-1X-HRPD" /
+    "3GPP2-1X" /
+    "ADSL" /
+    "ADSL2" /
+    "ADSL2+" /
+    "RADSL" /
+    "SDSL" /
+    "HDSL" /
+    "HDSL2" /
+    "G.SHDSL" /
+    "VDSL" /
+    "IDSL" /
+    "DOCSIS" /
+    "GSTN" /
+    "GPON" /
+    "XGPON1" /
+    "DVB-RCS2" /
+    token
+access-class =
+    "3GPP-GERAN" /
+    "3GPP-UTRAN" /
+    "3GPP-E-UTRAN" /
+    "3GPP-WLAN" /
+    "3GPP-GAN" /
+    "3GPP-HSPA" /
+    "3GPP2" /
+    token
+access-info =
+    cgi-3gpp /
+    utran-cell-id-3gpp /
+    dsl-location /
+    i-wlan-node-id /
+    ci-3gpp2 /
+    eth-location /
+    ci-3gpp2-femto /
+    fiber-location /
+    np /
+    gstn-location /
+    local-time-zone /
+    dvb-rcs2-node-id / 
+    ; updated by RFC 7913:
+    operator-specific-GI /
+    utran-sai-3gpp /
+    extension-access-info
+cgi-3gpp =
+    "cgi-3gpp"  EQUAL  ( token /  quoted-string )
+utran-cell-id-3gpp =
+    "utran-cell-id-3gpp"  EQUAL  ( token /  quoted-string )
+dsl-location =
+    "dsl-location"  EQUAL  ( token /  quoted-string )
+i-wlan-node-id =
+    "i-wlan-node-id"  EQUAL  ( token /  quoted-string )
+ci-3gpp2 =
+    "ci-3gpp2"  EQUAL  ( token /  quoted-string )
+eth-location =
+    "eth-location"  EQUAL  ( token /  quoted-string )
+ci-3gpp2-femto =
+    "ci-3gpp2-femto"  EQUAL  ( token /  quoted-string )
+fiber-location =
+    "fiber-location"  EQUAL  ( token /  quoted-string )
+np =
+    "network-provided"
+gstn-location =
+    "gstn-location"  EQUAL  ( token /  quoted-string )
+local-time-zone =
+    "local-time-zone"  EQUAL  quoted-string
+dvb-rcs2-node-id =
+    "dvb-rcs2-node-id"  EQUAL  quoted-string
+operator-specific-GI =
+    "operator-specific-GI" EQUAL (token / quoted-string)
+utran-sai-3gpp =
+    "utran-sai-3gpp" EQUAL (token / quoted-string)
+extension-access-info =
+    ; updated by RFC 7913:
+    generic-param
+
+; P-Answer-State  Header
+; SIP Header introduced in RFC 4964: see Section 6 - Section 7.1
+P-Answer-State =
+    "P-Answer-State"  HCOLON  answer-type  *( SEMI  generic-param )
+answer-type =
+    "Confirmed" /  "Unconfirmed" /  token
+
+; P-Asserted-Identity  Header
+; SIP Header introduced in RFC 3325: see Section 9.1
+P-Asserted-Identity =
+    "P-Asserted-Identity"  HCOLON  PAssertedID-value  *( COMMA  PAssertedID-value )
+    ; examples:
+    ; P-Asserted-Identity: "Cullen Jennings" <sip:fluffy@cisco.com>
+    ; P-Asserted-Identity: tel:+14085264000
+
+PAssertedID-value =
+    name-addr  /  addr-spec
+
+; P-Asserted-Service  Header
+; SIP Header introduced in RFC 6050: see Section 4.1
+P-Asserted-Service =
+    "P-Asserted-Service"  HCOLON  PAssertedService-value
+PAssertedService-value =
+    Service-ID  *( COMMA  Service-ID )
+Service-ID =
+    "urn:urn-7:"  urn-service-id
+urn-service-id =
+    top-level  *( "."  sub-service-id )
+top-level =
+    let-dig  [ *26let-dig ]
+sub-service-id =
+    let-dig  [ *let-dig ]
+let-dig =
+    ALPHA /  DIGIT /  "-"
+
+; P-Associated-URI  Header
+; SIP Header introduced in RFC 7315: see Section 4.1 - Section 5.1
+P-Associated-URI =
+    "P-Associated-URI"  HCOLON  [ p-aso-uri-spec ]  *( COMMA  p-aso-uri-spec )
+p-aso-uri-spec =
+    name-addr  *( SEMI  ai-param )
+ai-param =
+    generic-param
+
+; P-Called-Party-ID  Header
+; SIP Header introduced in RFC 7315: see Section 4.2 - Section 5.2
+P-Called-Party-ID =
+    "P-Called-Party-ID"  HCOLON  called-pty-id-spec
+    ; example:
+    ; P-Called-Party-ID: sip:user1-business@example.com
+
+called-pty-id-spec =
+    name-addr  *( SEMI  cpid-param )
+cpid-param =
+    generic-param
+
+; P-Charge-Info  Header
+; SIP Header introduced in RFC 8496: see Section 5
+P-Charge-Info =
+    "P-Charge-Info"  HCOLON  ( name-addr /  addr-spec )
+    ; examples:
+    ; P-Charge-Info: <sip:+14075550134@example.net;user=phone>
+    ; P-Charge-Info: <sip:+12345550167@example.com>
+    ; P-Charge-Info: <sips:1234@example.com>
+    ; P-Charge-Info: <tel:+14075551234>
+
+
+; P-Charging-Function-Addresses  Header
+; SIP Header introduced in RFC 7315: see Section 4.5 - Section 5.5
+P-Charging-Function-Addresses =
+    "P-Charging-Function-Addresses"  HCOLON  charge-addr-params *( COMMA  charge-addr-params )
+    ; example:
+    ; P-Charging-Function-Addresses: ccf=192.1.1.1; ccf=192.1.1.2
+
+charge-addr-params =
+    charge-addr-param  *( SEMI  charge-addr-param )
+charge-addr-param =
+    ccf /  ecf /  ccf-2 /  ecf-2 /  generic-param
+ccf =
+    "ccf"  EQUAL  gen-value
+ecf =
+    "ecf"  EQUAL  gen-value
+ccf-2 =
+    "ccf-2"  EQUAL  gen-value
+ecf-2 =
+    "ecf-2"  EQUAL  gen-value
+
+; P-Charging-Vector  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2A.5
+; See also: RFC 7315 - Section 4.6 - Section 5.6
+P-Charging-Vector =
+    "P-Charging-Vector"  HCOLON  icid-value  *( SEMI  charge-params )
+    ; example:
+    ; P-Charging-Vector: icid-value=1234bc9876e;
+    ;    icid-generated-at=192.0.6.8; orig-ioi=home1.net
+
+charge-params =
+    icid-gen-addr /  orig-ioi /  term-ioi /  transit-ioi /  related-icid /  related-icid-gen-addr /  generic-param
+icid-value =
+    "icid-value"  EQUAL  gen-value
+icid-gen-addr =
+    "icid-generated-at"  EQUAL  host
+orig-ioi =
+    "orig-ioi"  EQUAL  gen-value
+term-ioi =
+    "term-ioi"  EQUAL  gen-value
+transit-ioi =
+    "transit-ioi"  EQUAL  transit-ioi-list
+transit-ioi-list =
+    DQUOTE  transit-ioi-param  *( COMMA  transit-ioi-param )  DQUOTE
+transit-ioi-param =
+    transit-ioi-indexed-value /  transit-ioi-void-value
+transit-ioi-indexed-value =
+    transit-ioi-name  "."  transit-ioi-index
+transit-ioi-name =
+    ALPHA  *( ALPHA /  DIGIT )
+transit-ioi-index =
+    1*DIGIT
+transit-ioi-void-value =
+    "void"
+related-icid =
+    "related-icid"  EQUAL  gen-value
+related-icid-gen-addr =
+    "related-icid-generated-at"  EQUAL  host
+
+; P-DCS-Billing-Info  Header
+; SIP Header introduced in RFC 5503: see Section 7.1
+P-DCS-Billing-Info =
+    "P-DCS-Billing-Info"  HCOLON  Billing-Correlation-ID  "/"  FEID  *( SEMI  Billing-Info-param )
+Billing-Correlation-ID =
+    1*48( HEXDIG )
+FEID =
+    1*16( HEXDIG )  "@"  host
+Billing-Info-param =
+    RKS-Group-ID-param /  Charge-param /  Calling-param /  Called-param /  Routing-param /  Loc-Routing-param /  JIP-param /  generic-param
+RKS-Group-ID-param =
+    "rksgroup"  EQUAL  RKS-Group-ID
+RKS-Group-ID =
+    token
+Charge-param =
+    "charge"  EQUAL  Acct-Charge-URI
+Acct-Charge-URI =
+    LDQUOT  addr-spec  RDQUOT
+Calling-param =
+    "calling"  EQUAL  Acct-Calling-URI
+Acct-Calling-URI =
+    LDQUOT  addr-spec  RDQUOT
+Called-param =
+    "called"  EQUAL  Acct-Called-URI
+Acct-Called-URI =
+    LDQUOT  addr-spec  RDQUOT
+Routing-param =
+    "routing"  EQUAL  Acct-Routing-URI
+Acct-Routing-URI =
+    LDQUOT  addr-spec  RDQUOT
+Loc-Routing-param =
+    "locroute"  EQUAL  Acct-Loc-Routing-URI
+Acct-Loc-Routing-URI =
+    LDQUOT  addr-spec  RDQUOT
+JIP-param =
+    "jip"  EQUAL  jip
+jip =
+    LDQUOT  1*phonedigit-hex  jip-context  RDQUOT
+jip-context =
+    ";jip-context="  jip-descriptor
+jip-descriptor =
+    global-hex-digits
+global-hex-digits =
+    "+"  1*3( phonedigit )  *phonedigit-hex
+phonedigit =
+    DIGIT /  [ visual-separator ]
+phonedigit-hex =
+    HEXDIG /  "*" /  "#" /  [ visual-separator ]
+visual-separator =
+    "-" /  "." /  "(" /  ")"
+
+; P-DCS-LAES  Header
+; SIP Header introduced in RFC 5503: see Section 8.1
+P-DCS-LAES =
+    "P-DCS-LAES"  HCOLON  Laes-sig  *( SEMI  Laes-param )
+Laes-sig =
+    hostport
+Laes-param =
+    Laes-content /  Laes-cccid /  Laes-bcid  /  generic-param
+Laes-content =
+    "content"  EQUAL  hostport
+Laes-cccid =
+    "cccid"  EQUAL  1*8( HEXDIG )
+Laes-bcid  =
+    "cccid"  EQUAL   1*48( HEXDIG )
+
+; P-DCS-OSPS  Header
+; SIP Header introduced in RFC 5503: see Section 6.1
+P-DCS-OSPS =
+    "P-DCS-OSPS"  HCOLON  OSPS-Tag
+OSPS-Tag =
+    "BLV" /  "EI" /  "RING" /  token
+
+; P-DCS-Redirect  Header
+; SIP Header introduced in RFC 5503: see Section 8.1
+P-DCS-Redirect =
+    "P-DCS-Redirect"  HCOLON  Called-ID  *( SEMI  redir-params )
+Called-ID =
+    LDQUOT  addr-spec  RDQUOT
+redir-params =
+    redir-uri-param /  redir-count-param /  generic-param
+redir-uri-param =
+    "redirector-uri"  EQUAL  Redirector
+Redirector =
+    LDQUOT  addr-spec  RDQUOT
+redir-count-param =
+    "count"  EQUAL  Redir-count
+Redir-count =
+    1*DIGIT
+
+; P-DCS-Trace-Party-ID  Header
+; SIP Header introduced in RFC 5503: see Section 5.1
+P-DCS-Trace-Party-ID =
+    "P-DCS-Trace-Party-ID"  HCOLON  name-addr *1( SEMI  timestamp-param )  *( SEMI  trace-param )
+timestamp-param =
+    "timestamp="  1*DIGIT  [ "."  1*DIGIT ]
+trace-param =
+    generic-param
+
+; P-Early-Media  Header
+; SIP Header introduced in RFC 5009: see Section 9
+P-Early-Media =
+    "P-Early-Media"  HCOLON  [ em-param  *( COMMA  em-param) ]
+em-param =
+    "sendrecv" /  "sendonly" /  "recvonly" /  "inactive" /  "gated" /  "supported" /  token
+
+; P-Media-Authorization  Header
+; SIP Header introduced in RFC 3313: see Section 5.1
+P-Media-Authorization =
+    "P-Media-Authorization"  HCOLON  P-Media-Authorization-Token  *( COMMA  P-Media-Authorization-Token )
+P-Media-Authorization-Token  =
+    1*HEXDIG
+
+; P-Preferred-Identity  Header
+; SIP Header introduced in RFC 3325: see Section 9.2
+P-Preferred-Identity =
+    "P-Preferred-Identity"  HCOLON  PPreferredID-value  *( COMMA  PPreferredID-value )
+    ; example:
+    ; P-Preferred-Identity: "Cullen Jennings" <sip:fluffy@cisco.com>
+
+PPreferredID-value =
+    name-addr /  addr-spec
+
+; P-Preferred-Service  Header
+; SIP Header introduced in RFC 6050: see Section 4.2
+P-Preferred-Service =
+    "P-Preferred-Service"  HCOLON  PPreferredService-value
+PPreferredService-value =
+    Service-ID  *( COMMA  Service-ID )
+
+; P-Private-Network-Indication  Header
+; SIP Header introduced in RFC 7316: see Section 7
+P-Private-Network-Indication =
+    "P-Private-Network-Indication"  HCOLON  PNI-value  *( SEMI  PNI-param )
+    ; example:
+    ; P-Private-Network-Indication: example.com
+
+PNI-value =
+    generic-param
+PNI-param =
+    hostname
+
+; P-Profile-Key  Header
+; SIP Header introduced in RFC 5002: see Section 5
+P-Profile-Key =
+    "P-Profile-Key"  HCOLON  ( name-addr /  addr-spec )  *( SEMI  generic-param )
+    ; example:
+    ; P-Profile-Key: <sip:chatroom-!.*!@example.com>
+
+
+; P-Refused-URI-List  Header
+; SIP Header introduced in RFC 5318: see Section 5
+P-Refused-URI-List =
+    "P-Refused-URI-List"  HCOLON  uri-list-entry  *( COMMA  uri-list-entry )
+uri-list-entry =
+    ( name-addr /  addr-spec )  *( SEMI  refused-param )
+refused-param =
+    members-param /  generic-param
+members-param =
+    "members"  EQUAL  LDQUOT  *( qdtext /  quoted-pair )  RDQUOT
+
+; P-Served-User  Header
+; SIP Header introduced in RFC 5502: see Section 6
+; See also: RFC 8498 - Section 6.2
+P-Served-User =
+    "P-Served-User"  HCOLON  PServedUser-value  *( SEMI  served-user-param )
+served-user-param =
+    sessioncase-param / 
+                    registration-state-param / 
+                    generic-param
+PServedUser-value =
+    name-addr /  addr-spec
+sessioncase-param =
+    "sescase"  EQUAL  ( "orig" /  "term" ) /  orig-cdiv
+registration-state-param =
+    "regstate"  EQUAL  "unreg" /  "reg"
+orig-cdiv =
+    "orig-cdiv"
+
+; P-User-Database  Header
+; SIP Header introduced in RFC 4457: see Section 4
+P-User-Database =
+    "P-User-Database"  HCOLON  database  *( SEMI  generic-param )
+database =
+    LAQUOT  DiameterURI   RAQUOT
+    ;  Diameter-URI is defined in   RFC 3588 - Section 4.3
+    ; example:
+    ; P-User-Database: <aaa://host.example.com;transport=tcp>
+
+DiameterURI =
+    "aaa://" FQDN [ port ] [ transport ] [ protocol ] / ; No transport security
+    "aaas://" FQDN [ port ] [ transport ] [ protocol ] ; Transport security used
+FQDN = ; Fully Qualified Host Name
+    hostname
+port =
+    ":" 1*DIGIT
+    ; One of the ports used to listen for
+    ; incoming connections.
+    ; If absent,
+    ; the default Diameter port (3868) is
+    ; assumed.
+transport =
+    ";transport=" transport-protocol
+    ; One of the transports used to listen
+    ; for incoming connections.  If absent,
+    ; the default SCTP [SCTP] protocol is
+    ; assumed.  UDP MUST NOT be used when
+    ; the aaa-protocol field is set to
+    ; diameter.
+transport-protocol =
+    ( "tcp" / "sctp" / "udp" )
+protocol =
+    ";protocol=" aaa-protocol
+    ; If absent, the default AAA protocol
+    ; is diameter.
+aaa-protocol =
+    ( "diameter" / "radius" / "tacacs+" )
+
+
+; P-Visited-Network-ID  Header
+; SIP Header introduced in RFC 7315: see Section 4.3 - Section 5.3
+P-Visited-Network-ID =
+    "P-Visited-Network-ID"  HCOLON  vnetwork-spec  *( COMMA  vnetwork-spec )
+    ; example:
+    ; P-Visited-Network-ID: other.net, "Visited network number 1"
+
+vnetwork-spec =
+    ( token /  quoted-string )  *( SEMI  vnetwork-param )
+vnetwork-param =
+    generic-param
+
+; Path  Header
+; SIP Header introduced in RFC 3327: see Section 4 for the ABNF.
+Path =
+    "Path"  HCOLON  path-value  *( COMMA  path-value )
+    ; example:
+    ; Path: <sip:P3.EXAMPLEHOME.COM;lr>,<sip:P1.EXAMPLEVISITED.COM;lr>
+
+path-value =
+    name-addr  *( SEMI  rr-param )
+
+; Permission-Missing  Header
+; SIP Header introduced in RFC 5360: see Section 5.9.3 for the ABNF.
+Permission-Missing =
+    "Permission-Missing"  HCOLON  per-miss-spec  *( COMMA  per-miss-spec )
+    ; example:
+    ; Permission-Missing: sip:C@example.com
+
+per-miss-spec =
+    ( name-addr /  addr-spec )  *( SEMI  generic-param )
+
+; Policy-Contact  Header
+; SIP Header introduced in RFC 6794: see Section 4.4.5.2 for the ABNF.
+Policy-Contact =
+    "Policy-Contact"  HCOLON  policyContact-info  *( COMMA  policyContact-info )
+policyContact-info =
+    LAQUOT  policyContact-uri  RAQUOT  *( SEMI  policyContact-param )
+policyContact-uri =
+    ( SIP-URI /  SIPS-URI /  absoluteURI )
+policyContact-param =
+    ( "non-cacheable" /  policyContact-alt-uri /  generic-param )
+policyContact-alt-uri =
+    "alt-uri"  EQUAL  hostname
+
+; Policy-ID  Header
+; SIP Header introduced in RFC 6794: see Section 4.4.5.1 for the ABNF.
+Policy-ID =
+    "Policy-ID"  HCOLON  policyURI  *( COMMA  policyURI )
+policyURI =
+    ( SIP-URI /  SIPS-URI /  absoluteURI )  [ SEMI  token-param ]  *( SEMI  generic-param )
+token-param =
+    "token="  token
+
+; Priority  Header
+; SIP Header introduced in RFC 3261: see Section 20.26 for the description and Here for the ABNF.
+Priority =
+    "Priority"  HCOLON  priority-value
+    ; example:
+    ; Priority: emergency
+
+priority-value =
+    "emergency" /  "urgent" /  "normal" /  "non-urgent" /  other-priority
+other-priority =
+    token
+
+; Priority-Share  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.16
+Priority-Share =
+    "Priority-Share"  HCOLON  priority-share-options  *( SEMI  generic-param )
+priority-share-options =
+    "allowed" /  "not-allowed" /  other-options
+other-options =
+    token
+
+; Privacy  Header
+; SIP Header introduced in RFC 3323: see Section 4.2 for the ABNF.
+Privacy =
+    "Privacy"  HCOLON  priv-value  *( ";"  priv-value )
+    ; example:
+    ; Privacy: id
+
+priv-value =
+    "header" /  "session" /  "user" /  "none" /  "critical" /  ; see RFC 3323
+    "id" /  ; see  RFC 3325 - Section 9.3
+    "history" /  ; see  RFC 7044 - Section 14.2
+    token
+
+; Priv-Answer-Mode  Header
+; SIP Header introduced in RFC 5373: see Section 2 for the ABNF.
+Priv-Answer-Mode =
+    "Priv-Answer-Mode"  HCOLON  answer-mode-value  *( SEMI  answer-mode-param )
+    ; example:
+    ; Priv-Answer-Mode: Auto
+
+
+; Proxy-Authenticate  Header
+; SIP Header introduced in RFC 3261: see Section 20.27 for the description and Here for the ABNF.
+Proxy-Authenticate =
+    "Proxy-Authenticate"  HCOLON  challenge
+    ; example:
+    ; Proxy-Authenticate: Digest realm="atlanta.example.com", qop="auth",
+    ;    nonce="f84f1cec41e6cbe5aea9c8e88d359",
+    ;    opaque="", stale=FALSE, algorithm=MD5
+
+challenge =
+    ( "Digest"  LWS  digest-cln  *( COMMA  digest-cln ) ) /  other-challenge
+other-challenge =
+    auth-scheme  LWS  auth-param  *( COMMA  auth-param )
+digest-cln =
+    realm /  domain /  nonce /  opaque /  stale /  algorithm /  qop-options /  auth-param
+realm =
+    "realm"  EQUAL  realm-value
+realm-value =
+    quoted-string
+domain =
+    "domain"  EQUAL  LDQUOT  URI  *( 1*SP  URI )  RDQUOT
+URI =
+    absoluteURI /  abs-path
+nonce =
+    "nonce"  aka-nonce  ( aka-nonce /  nonce-value )
+    ; example: ; nonce rule is as amended by RFC 3310
+    ; nonce="MzQ0a2xrbGtmbGtsZm9wb2tsc2tqaHJzZXNy9uQyMzMzMzQK="
+
+aka-nonce =
+    LDQUOT  aka-nonce-value  RDQUOT
+aka-nonce-value =
+    1*base64-char
+    ; <base64 encoding of RAND, AUTN, and server specific data>
+nonce-value =
+    quoted-string
+opaque =
+    "opaque"  EQUAL  quoted-string
+stale =
+    "stale"  EQUAL  ( "true" /  "false" )
+algorithm =
+    "algorithm"  EQUAL  ( aka-namespace /  algorithm-value )
+    ; example:
+    ;  algorithm=AKAv1-MD5
+
+algorithm-value =
+    ( "MD5" /  "MD5-sess" /  token )
+aka-namespace =
+    aka-version  "-"  algorithm-value
+aka-version =
+    "AKAv"  1*DIGIT
+    ; AKAv1  RFC 3310 - Section 3.1
+
+    ; AKAv2  RFC 4169 - Section 5
+
+qop-options =
+    "qop"  EQUAL  LDQUOT  qop-value  *( ","  qop-value )  RDQUOT
+qop-value =
+    "auth" /  "auth-int" /  token
+
+; Proxy-Authorization  Header
+; SIP Header introduced in RFC 3261: see Section 20.28 for the description and Here for the ABNF.
+Proxy-Authorization =
+    "Proxy-Authorization"  HCOLON  credentials
+    ; example:
+    ; Proxy-Authorization: Digest username="alice",
+    ;   realm="atlanta.example.com",
+    ;   nonce="wf84f1ceczx41ae6cbe5aea9c8e88d359", opaque="",
+    ;   uri="sip:bob@biloxi.example.com",
+    ;   response="42ce3cef44b22f50c6a6071bc8"
+
+
+; Proxy-Require  Header
+; SIP Header introduced in RFC 3261: see Section 20.29 for the description and Here for the ABNF.
+Proxy-Require =
+    "Proxy-Require"  HCOLON  option-tag  *( COMMA  option-tag )
+    ; example:
+    ; Proxy-Require: sec-agree
+
+
+; RAck  Header
+; SIP Header introduced in RFC 3262: see Section 10 for the ABNF.
+RAck =
+    "RAck"  HCOLON  response-num  LWS  CSeq-num  LWS  Method
+    ; example:
+    ; RAck: 776656 1 INVITE
+
+response-num =
+    1*DIGIT
+CSeq-num =
+    1*DIGIT
+
+; Reason  Header
+; SIP Header introduced in RFC 3326: see Section 2 for the ABNF.
+; See also: RFC 8606 - Section 4  3GPP TS 24.229 - Clause 7.2A.18
+Reason =
+    "Reason"  HCOLON  reason-value  *( COMMA  reason-value )
+    ; examples:
+    ;  Reason: SIP;cause=200;text="Call completed elsewhere"
+    ;  Reason: Q.850;cause=16;text="Terminated"
+    ;  Reason: SIP;cause=600;text="Busy Everywhere"
+    ;  Reason: SIP;cause=580;text="Precondition Failure"
+    ;  Reason: preemption;cause=1;text="UA Preemption"
+    ;  Reason: preemption;cause=2;text="Reserved Resources Preempted"
+    ;  Reason: preemption;cause=3;text="Generic Preemption"
+    ;  Reason: preemption;cause=4;text="Non-IP Preemption"
+
+reason-value =
+    protocol  *( SEMI  reason-params )
+protocol =
+    "SIP" /  "Q.850" / 
+    "Preemption" /  ; see  RFC 4411 - Section 5
+    ; the following in  3GPP TS 24.229 - Clause 7.2A.18
+    ; -----
+    "EMM" /
+    ; EPS Mobility Management
+    ; see  3GPP TS 24.301 - subclause 9.9.3.9
+    "ESM" /
+    ; EPS Session Management
+    ; see  3GPP TS 24.301 - subclause 9.9.4.4
+    "S1AP-RNL" /
+    ; Radio Network Layer
+    ; see  3GPP TS 36.413
+    "S1AP-TL" /
+    ; Transport Layer
+    ; see  3GPP TS 36.413
+    "S1AP-NAS" /
+    ; Non-Access Stratum
+    ; see  3GPP TS 36.413
+    "S1AP-MISC" /
+    ; Miscellaneous
+    ; see  3GPP TS 36.413
+    "S1AP-PROT" /
+    ; Protocol
+    ; see  3GPP TS 36.413
+    "DIAMETER" /
+    "IKEV2" /
+    ; see  3GPP TS 29.274 - subclause 8.103
+    "RELEASE_CAUSE" / 
+    ; 1  User ends call
+    ; 2  RTP/RTCP time-out
+    ; 3  Media bearer loss
+    ; 4  SIP timeout - no ACK
+    ; 5  SIP response time-out
+    ; 6  Call-setup time-out  
+    "FAILURE_CAUSE" / 
+    ; 1  Media bearer or QoS lost
+    ; 2  Release of signalling bearer
+    ; 3  Indication of failed resources allocation  
+    ; -----
+    token
+reason-params =
+    protocol-cause /  reason-text /  isup-cause-location /  reason-extension
+protocol-cause =
+    "cause"  EQUAL  cause
+cause =
+    1*DIGIT
+reason-text =
+    "text"  EQUAL  quoted-string
+isup-cause-location =
+    "location"  EQUAL  isup-location-value
+isup-location-value =
+    "U" /
+      ; for  0 0 0 0  user
+    "LPN" /
+      ; for  0 0 0 1  private network serving the local user
+    "LN" /
+      ; for  0 0 1 0  public network serving the local user
+    "TN" /
+      ; for  0 0 1 1  transit network
+    "RLN" /
+      ; for  0 1 0 0  public network serving the remote user
+    "RPN" /
+      ; for  0 1 0 1  private network serving the remote user
+    "LOC-6" /
+      ; for  0 1 1 0  spare
+    "INTL" /
+      ; for  0 1 1 1  international network
+    "LOC-8" /
+      ; for  1 0 0 0  spare
+    "LOC-9" /
+      ; for  1 0 0 1  spare
+    "BI" /
+      ; for  1 0 1 0  network beyond interworking point
+    "LOC-11" /
+      ; for  1 0 1 1  spare
+    "LOC-12" /
+      ; for  1 1 0 0  reserved for national use
+    "LOC-13" /
+      ; for  1 1 0 1  reserved for national use
+    "LOC-14" /
+      ; for  1 1 1 0  reserved for national use
+    "LOC-15"
+      ; for  1 1 1 1  reserved for national use
+reason-extension =
+    generic-param
+
+; Record-Route  Header
+; SIP Header introduced in RFC 3261: see Section 20.30 for the description and Here for the ABNF.
+Record-Route =
+    "Record-Route"  HCOLON  rec-route  *( COMMA  rec-route )
+    ; example:
+    ; Record-Route: <sip:ss2.biloxi.example.com;lr>,
+    ;  <sip:ss1.atlanta.example.com;lr>
+
+rec-route =
+    name-addr  *( SEMI  rr-param )
+rr-param =
+    generic-param
+
+; Recv-Info  Header
+; SIP Header introduced in RFC 6086: see Section 9.2 for the ABNF.
+Recv-Info =
+    "Recv-Info"  HCOLON  [ Info-package-list ]
+    ; example:
+    ; Recv-Info: P, R
+
+Info-package-list =
+    Info-package-type  *( COMMA  Info-package-type )
+
+; Refer-Events-At  Header
+; SIP Header introduced in RFC 7614: see Section 4.8 for the ABNF.
+Refer-Events-At =
+    "Refer-Events-At"  HCOLON  LAQUOT  ( SIP-URI /  SIPS-URI )  RAQUOT  *( SEMI  generic-param )
+    ; example:
+    ; Refer-Events-At: <sips:vPT3izGmo8NTxaPADRZvEAY22BKx@example.com;gr>
+
+
+; Refer-Sub  Header
+; SIP Header introduced in RFC 4488: see Section 4 for the ABNF.
+Refer-Sub =
+    "Refer-Sub"  HCOLON  refer-sub-value  *( SEMI  exten )
+refer-sub-value =
+    "true" /  "false"
+exten =
+    generic-param
+
+; Refer-To  Header
+; SIP Header introduced in RFC 3515: see Section 2.1 for the ABNF.
+; See also: RFC 4508 - Section 3
+Refer-To =
+    ( "Refer-To" /  "r" )  HCOLON  ( name-addr /  addr-spec )  *( SEMI  refer-param )
+    ; example:
+    ; Refer-To: <sips:a8342043f@atlanta.example.com?Replaces=
+    ;   12345601%40atlanta.example.com%3Bfrom-tag%3D314159%3Bto-tag%3D1234567>
+    ; Refer-To: sip:conf44@example.com;isfocus
+
+refer-param =
+    generic-param /  feature-param
+
+; Referred-By  Header
+; SIP Header introduced in RFC 3892: see Section 3 for the ABNF.
+Referred-By =
+    ( "Referred-By" /  "b" )  HCOLON  referrer-uri  *( SEMI  ( referredby-id-param /  generic-param ) )
+    ; example:
+    ; Referred-By: <sip:referrer@referrer.example>
+    ;   ;cid="abnf-20398823.2UWQFN309shb3@referrer.example"
+
+referrer-uri =
+    ( name-addr /  addr-spec )
+referredby-id-param =
+    "cid"  EQUAL  sip-clean-msg-id
+sip-clean-msg-id =
+    LDQUOT  dot-atom  "@"  ( dot-atom /  host )  RDQUOT
+dot-atom =
+    atom  *( "."  atom )
+atom =
+    1*( alphanum /  "-" /  "!" /  "%" /  "*" /  "_" /  "+" /  "'" /  "`" /  "~" )
+
+; Reject-Contact  Header
+; SIP Header introduced in RFC 3841: see Section 10 for the ABNF.
+Reject-Contact =
+    ( "Reject-Contact" /  "j" )  HCOLON  rc-value  *( COMMA  rc-value )
+    ; example:
+    ; Reject-Contact: *;actor="msg-taker";video
+
+rc-value =
+    "*"  *( SEMI  rc-params )
+rc-params =
+    feature-param /  generic-param
+
+; Replaces  Header
+; SIP Header introduced in RFC 3891: see Section 6.1 for the ABNF.
+Replaces =
+    "Replaces"  HCOLON  callid  *( SEMI  replaces-param )
+    ; example:
+    ; Replaces: 425928@bobster.example.org;to-tag=7743;from-tag=6472
+
+replaces-param =
+    to-tag /  from-tag /  early-flag /  generic-param
+to-tag =
+    "to-tag"  EQUAL  token
+from-tag =
+    "from-tag"  EQUAL  token
+early-flag =
+    "early-only"
+
+; Reply-To  Header
+; SIP Header introduced in RFC 3261: see Section 20.31 for the description and Here for the ABNF.
+Reply-To =
+    "Reply-To"  HCOLON  rplyto-spec
+    ; example:
+    ; Reply-To: Bob <sip:bob@biloxi.com>
+
+rplyto-spec =
+    ( name-addr /  addr-spec )  *( SEMI  rplyto-param )
+rplyto-param =
+    generic-param
+
+; Request-Disposition  Header
+; SIP Header introduced in RFC 3841: see Section 10 for the ABNF.
+Request-Disposition =
+    ( "Request-Disposition" /  "d" )  HCOLON  directive  *( COMMA  directive )
+    ; example:
+    ; Request-Disposition: proxy, recurse, parallel
+
+directive =
+    proxy-directive /  cancel-directive /  fork-directive /  recurse-directive /  parallel-directive /  queue-directive
+proxy-directive =
+    "proxy" /  "redirect"
+cancel-directive =
+    "cancel" /  "no-cancel"
+fork-directive =
+    "fork" /  "no-fork"
+recurse-directive =
+    "recurse" /  "no-recurse"
+parallel-directive =
+    "parallel" /  "sequential"
+queue-directive =
+    "queue" /  "no-queue"
+
+; Require  Header
+; SIP Header introduced in RFC 3261: see Section 20.32 for the description and Here for the ABNF.
+Require =
+    "Require"  HCOLON  option-tag  *( COMMA  option-tag )
+    ; example:
+    ; Require: 100rel
+
+
+; Resource-Priority  Header
+; SIP Header introduced in RFC 4412: see Section 3.1 for the ABNF.
+Resource-Priority =
+    "Resource-Priority"  HCOLON  r-value  *( COMMA  r-value )
+    ; example:
+    ; Resource-Priority: wps.3, dsn.flash
+
+r-value =
+    namespace  "."  r-priority
+namespace =
+    token-nodot
+r-priority =
+    token-nodot
+token-nodot =
+    1*( alphanum /  "-" /  "!" /  "%" /  "*" /  "_" /  "+" /  "`" /  "'" /  "~" )
+
+; Relayed-Charge  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.12
+Relayed-Charge =
+    "Relayed-Charge"  HCOLON  relayed-charge-list
+relayed-charge-list =
+    relayed-charge-item  *( COMMA  relayed-charge-item )
+relayed-charge-item =
+    relay-source  HCOLON  charge-params *( SEMI  charge-params )
+relay-source =
+    "PCSCF" /  "SCSCF" /  "IBCF" /  "transitfunction" /  "ICSCF" /  other-source
+other-source =
+    token
+
+; Resource-Share  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.13
+Resource-Share =
+    "Resource-Share"  HCOLON  r-s-param
+r-s-param =
+    r-s-supported /  r-s-no-media-sharing /  r-s-media-sharing /  r-s-other
+r-s-supported =
+    "supported"  [ SEMI  origin ]  *( SEMI  generic-param )
+r-s-no-media-sharing =
+    "no-media-sharing"  SEMI  origin  *( SEMI  generic-param )
+r-s-media-sharing =
+    "media-sharing"  SEMI  origin  SEMI  resource-sharing-rules  SEMI  timestamp  *( SEMI  generic-param )
+r-s-other =
+    other-status  *( SEMI  generic-param )
+other-status =
+    token
+origin =
+    "session-initiator" /  "session-receiver" /  other-origin
+other-origin =
+    token
+resource-sharing-rules =
+    "rules"  EQUAL  DQUOTE  resource-sharing-rule  *( COMMA  resource-sharing-rule )  DQUOTE 
+resource-sharing-rule =
+    [ active-resource-sharing-rule ]
+active-resource-sharing-rule =
+    new-sharing-key  COLON  [ existing-sharing-key-list ]  COLON  directionality
+    *( COLON  generic-rule-param-value )
+new-sharing-key =
+    sharing-key
+existing-sharing-key-list =
+    sharing-key  *( SLASH  sharing-key )
+directionality =
+    "UL" /  "DL" /  "UL-DL" /  other-directionality
+other-directionality =
+    token
+sharing-key =
+    token
+generic-rule-param-value =
+    token
+timestamp =
+    "timestamp"  EQUAL  1*DIGIT
+
+; Response-Source  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.17
+Response-Source =
+    "Response-Source"  HCOLON  source-info
+source-info =
+    source-params  *( SEMI  source-params )
+source-params =
+    source-urn /  token
+source-urn =
+    "fe"  EQUAL  LAQUOT  source-urn-val  RAQUOT
+source-urn-val =
+    1*uric
+
+; Restoration-Info  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.11
+Restoration-Info =
+    "Restoration-Info"  HCOLON  pcrf-token /  reason /  generic-param
+pcrf-token =
+    ( "IMSI" /  ext-type )  EQUAL  pcrf-param
+pcrf-param =
+    quoted-string
+reason =
+    "noresponse"
+ext-type =
+    token
+
+; Retry-After  Header
+; SIP Header introduced in RFC 3261: see Section 20.33 for the description and Here for the ABNF.
+Retry-After =
+    "Retry-After"  HCOLON  delta-seconds  [ comment ]  *( SEMI  retry-param )
+    ; examples:
+    ;  Retry-After: 18000;duration=3600
+    ;  Retry-After: 120 (I'm in a meeting)
+
+retry-param =
+    ( "duration"  EQUAL  delta-seconds ) /  generic-param
+
+; Route  Header
+; SIP Header introduced in RFC 3261: see Section 20.34 for the description and Here for the ABNF.
+Route =
+    "Route"  HCOLON  route-param  *( COMMA  route-param )
+    ; example:
+    ; Route: <sip:ss1.atlanta.example.com;lr>,
+    ;  <sip:ss2.biloxi.example.com;lr>
+
+route-param =
+    name-addr  *( SEMI  rr-param )
+
+; RSeq  Header
+; SIP Header introduced in RFC 3262: see Section 10 for the ABNF.
+RSeq =
+    "RSeq"  HCOLON  response-num
+    ; example:
+    ; RSeq: 988789
+
+
+; Security-Client  Header
+; SIP Header introduced in RFC 3329: see Section 2.2 for the ABNF.
+Security-Client =
+    "Security-Client"  HCOLON  sec-mechanism  *( COMMA  sec-mechanism )
+sec-mechanism =
+    mechanism-name  *( SEMI  mech-parameters )
+mechanism-name =
+    (
+    "digest" /  "tls" /  "ipsec-ike" /  "ipsec-man" /  ; see  Section 2.2
+    "ipsec-3gpp" /  ; see  Appendix A
+    sdes-srtp-name /  msrp-tls-name /  bfcp-tls-name /  udptl-dtls-name / 
+    ; see  3GPP TS 24.229 - Section 7.2A.7
+    token
+    )
+sdes-srtp-name =
+    "sdes-srtp"
+msrp-tls-name =
+    "msrp-tls"
+bfcp-tls-name =
+    "bfcp-tls"
+udptl-dtls-name =
+    "udptl-dtls"
+mech-parameters =
+    (
+    preference /  digest-algorithm /  digest-qop /  digest-verify /  ; see  Section 2.2
+    algorithm /  protocol /  mode /  encrypt-algorithm /  spi /  port1 /  port2 /  ; see  Appendix A
+    spi-c /  spi-s /  port-c /  port-s /  ; see  3GPP TS 33.203 - Annex H
+    mediasec-param /  ; see  3GPP TS 24.229 - Section 7.2A.7
+    extension
+    )
+preference =
+    "q"  EQUAL  qvalue
+digest-algorithm =
+    "d-alg"  EQUAL  token
+digest-qop =
+    "d-qop"  EQUAL  token
+digest-verify =
+    "d-ver"  EQUAL  LDQUOT  32LHEX  RDQUOT
+algorithm =
+    "alg"  EQUAL  ( "hmac-md5-96" /  "hmac-sha-1-96" )
+protocol =
+    "prot"  EQUAL  ( "ah" /  "esp" )
+mode =
+    "mod"  EQUAL  (
+    "trans" /  "tun" / 
+    "UDP-enc-tun"  ; see  3GPP TS 33.203 - Annex H
+    )
+encrypt-algorithm =
+    "ealg"  EQUAL  (
+    "des-ede3-cbc" /  "null" / 
+    "aes-cbc"  ; see  3GPP TS 33.203 - Annex H
+    )
+spi =
+    "spi"  EQUAL  spivalue
+spi-c =
+    "spi-c"  EQUAL  spivalue
+spi-s =
+    "spi-s"  EQUAL  spivalue
+spivalue =
+    10DIGIT
+    ; 0 to 4294967295
+port1 =
+    "port1"  EQUAL  port
+port2 =
+    "port2"  EQUAL  port
+port-c =
+    "port-c"  EQUAL  port
+port-s =
+    "port-s"  EQUAL  port
+port =
+    1*DIGIT
+mediasec-param =
+    "mediasec"
+extension =
+    generic-param
+
+; Security-Server  Header
+; SIP Header introduced in RFC 3329: see Section 2.2 for the ABNF.
+Security-Server =
+    "Security-Server"  HCOLON  sec-mechanism  *( COMMA  sec-mechanism )
+    ; example:
+    ; Security-Server: ipsec-ike;q=0.1
+
+
+; Security-Verify  Header
+; SIP Header introduced in RFC 3329: see Section 2.2 for the ABNF.
+Security-Verify =
+    "Security-Verify"  HCOLON  sec-mechanism  *( COMMA  sec-mechanism )
+    ; example:
+    ; Security-Verify: tls;q=0.2
+
+
+; Server  Header
+; SIP Header introduced in RFC 3261: see Section 20.35 for the description and Here for the ABNF.
+Server =
+    "Server"  HCOLON  server-val  *( LWS  server-val )
+    ; example:
+    ; Server: HomeServer v2
+
+server-val =
+    product /  comment
+product =
+    token  [ SLASH  product-version ]
+product-version =
+    token
+
+; Service-Interact-Info  Header
+; SIP Header introduced in 3GPP TS 24.229: see Clause 7.2.14
+Service-Interact-Info =
+    "Service-Interact-Info"  HCOLON  executed-service-params  *( COMMA  executed-service-params )
+executed-service-params =
+    executed-service /  avoid-service
+executed-service =
+    "executed-service"  EQUAL  service-spec
+avoid-service =
+    "avoid-service"  EQUAL  service-spec
+service-spec =
+    service-id  *( SEMI  service-param )
+service-id =
+    token /  quoted-string
+service-param =
+    generic-param
+
+; Service-Route  Header
+; SIP Header introduced in RFC 3608: see Section 5 for the ABNF.
+Service-Route =
+    "Service-Route"  HCOLON  sr-value  *( COMMA  sr-value )
+    ; example:
+    ; Service-Route: <sip:P2.HOME.EXAMPLE.COM;lr>,
+    ;    <sip:HSP.HOME.EXAMPLE.COM;lr>
+
+sr-value =
+    name-addr  *( SEMI  rr-param )
+
+; Session-Expires  Header
+; SIP Header introduced in RFC 4028: see Section 4 for the ABNF.
+Session-Expires =
+    ( "Session-Expires" /  "x" )  HCOLON  delta-seconds  *( SEMI  se-params )
+    ; example:
+    ; Session-Expires: 4000;refresher=uac
+
+se-params =
+    refresher-param /  generic-param
+refresher-param =
+    "refresher"  EQUAL  ( "uas" /  "uac" )
+
+; Session-ID  Header
+; SIP Header introduced in RFC 7989: see Section 5 for the ABNF.
+; See also: RFC 8497 - Section 6
+Session-ID =
+    "Session-ID"  HCOLON  session-id-value
+session-id-value =
+    local-uuid  *( SEMI  sess-id-param )
+local-uuid =
+    sess-uuid /  nil
+remote-uuid =
+    sess-uuid /  nil
+sess-uuid =
+    32 ( DIGIT /  %x61-66 )
+    ;  32 chars of [0-9a-f]
+sess-id-param =
+    remote-param /  logme-param /  generic-param
+remote-param =
+    "remote"  EQUAL  remote-uuid
+logme-param =
+    "logme"
+nil =
+    32 ( "0" )
+
+; SIP-ETag  Header
+; SIP Header introduced in RFC 3903: see Section 12 for the ABNF.
+SIP-ETag =
+    "SIP-ETag"  HCOLON  entity-tag
+    ; example:
+    ; SIP-ETag: dx200xyz
+
+entity-tag =
+    token
+
+; SIP-If-Match  Header
+; SIP Header introduced in RFC 3903: see Section 12 for the ABNF.
+SIP-If-Match =
+    "SIP-If-Match"  HCOLON  entity-tag
+    ; example:
+    ; SIP-If-Match: dx200xyz
+
+
+; Subject  Header
+; SIP Header introduced in RFC 3261: see Section 20.36 for the description and Here for the ABNF.
+Subject =
+    ( "Subject" /  "s" )  HCOLON  [ TEXT-UTF8-TRIM ]
+    ; example:
+    ; Subject: A tornado is heading our way!
+
+
+; Subscription-State  Header
+; SIP Header introduced in RFC 6665: see Section 8.4 for the ABNF.
+Subscription-State =
+    "Subscription-State"  HCOLON  substate-value  *( SEMI  subexp-params )
+    ; example:
+    ; Subscription-State: active;expires=60
+
+substate-value =
+    "active" /  "pending" /  "terminated" /  extension-substate
+extension-substate =
+    token
+subexp-params =
+    ( "reason"  EQUAL  event-reason-value )  /
+    ( "expires"  EQUAL  delta-seconds )  /
+    ( "retry-after"  EQUAL  delta-seconds )  /
+    max-rate-param /  min-rate-param /  amin-rate-param /  generic-param
+event-reason-value =
+    "deactivated" /  "probation" /  "rejected" /  "timeout" /  "giveup" /  "noresource" /  "invariant" /  event-reason-extension
+event-reason-extension  =
+    token
+
+; Supported  Header
+; SIP Header introduced in RFC 3261: see Section 20.37 for the description and Here for the ABNF.
+Supported =
+    ( "Supported" /  "k" )  HCOLON  [ option-tag  *( COMMA  option-tag ) ]
+    ; example:
+    ; Supported: replaces
+
+
+; Suppress-If-Match  Header
+; SIP Header introduced in RFC 5839: see Section 7.2 for the ABNF.
+Suppress-If-Match =
+    "Suppress-If-Match"  HCOLON  entity-tag
+    ; example:
+    ; Suppress-If-Match: dx200xyz
+
+
+; Target-Dialog  Header
+; SIP Header introduced in RFC 4538: see Section 7 for the ABNF.
+Target-Dialog =
+    "Target-Dialog"  HCOLON  callid  *( SEMI  td-param )
+td-param =
+    remote-param /  local-param /  generic-param
+remote-param =
+    "remote-tag"  EQUAL  token
+local-param =
+    "local-tag"  EQUAL  token
+
+; Timestamp  Header
+; SIP Header introduced in RFC 3261: see Section 20.38 for the description and Here for the ABNF.
+Timestamp =
+    "Timestamp"  HCOLON  1*( DIGIT )  [ "."  *( DIGIT ) ]  [ LWS  delay ]
+    ; example:
+    ; Timestamp: 54
+
+delay =
+    *( DIGIT )  [ "."  *( DIGIT ) ]
+
+; To  Header
+; SIP Header introduced in RFC 3261: see Section 20.39 for the description and Here for the ABNF.
+To =
+    ( "To" /  "t" )  HCOLON  ( name-addr /  addr-spec )  *( SEMI  to-param )
+    ; example:
+    ; To: Bob <sip:bob@biloxi.example.com>;tag=8321234356
+
+to-param =
+    tag-param /  generic-param
+
+; Trigger-Consent  Header
+; SIP Header introduced in RFC 5360: see Section 5.11.2 for the ABNF.
+Trigger-Consent =
+    "Trigger-Consent"  HCOLON  trigger-cons-spec  *( COMMA  trigger-cons-spec )
+    ; example:
+    ; Trigger-Consent: sip:123@relay.example.com
+    ;     ;target-uri="sip:friends@relay.example.com"
+
+trigger-cons-spec =
+    ( SIP-URI /  SIPS-URI )  *( SEMI  trigger-param )
+trigger-param =
+    target-uri /  generic-param
+target-uri =
+    "target-uri"  EQUAL  LDQUOT  *( qdtext /  quoted-pair )  RDQUOT
+
+; Unsupported  Header
+; SIP Header introduced in RFC 3261: see Section 20.40 for the description and Here for the ABNF.
+Unsupported =
+    "Unsupported"  HCOLON  option-tag  *( COMMA  option-tag )
+    ; example:
+    ; Unsupported: 100rel
+
+
+; User-Agent  Header
+; SIP Header introduced in RFC 3261: see Section 20.41 for the description and Here for the ABNF.
+User-Agent =
+    "User-Agent"  HCOLON  server-val  *( LWS  server-val )
+    ; example:
+    ; User-Agent: Softphone Beta1.5
+
+
+; User-to-User  Header
+; SIP Header introduced in RFC 7433: see Section 4.1 for the ABNF.
+User-to-User =
+    "User-to-User"  HCOLON  uui-value  *( COMMA  uui-value )
+uui-value =
+    uui-data  *( SEMI  uui-param )
+uui-param =
+    token /  quoted-string
+uui-data =
+    pkg-param  /  cont-param /  enc-param /  generic-param
+pkg-param =
+    "purpose"  EQUAL  pkg-param-value
+pkg-param-value =
+    "isdn-uui" /  ; see  RFC 7434 - Section 11
+    token
+cont-param =
+    "content"  EQUAL  cont-param-value
+cont-param-value =
+    "isdn-uui" /  ; see  RFC 7434 - Section 11
+    token
+enc-param =
+    "encoding"  EQUAL  enc-param-value
+enc-param-value =
+    token /  "hex" 
+
+; Via  Header
+; SIP Header introduced in RFC 3261: see Section 20.42 for the description and Here for the ABNF.
+; See also: IANA
+Via =
+    ( "Via" /  "v" )  HCOLON  via-parm  *( COMMA  via-parm )
+via-parm =
+    sent-protocol  LWS  sent-by  *( SEMI  via-params )
+sent-protocol =
+    protocol-name  SLASH  protocol-version  SLASH  transport
+sent-by =
+    host  [ COLON  port ]
+protocol-name =
+    "SIP" /  token
+protocol-version =
+    token
+transport =
+    "UDP" /  "TCP" /  "TLS" /  "SCTP" /  ; see  RFC 3261
+    "TLS-SCTP" /  ; see  RFC 4168 - Section 4
+    "WS" /  "WSS" /  ; see  RFC 7118 - Section 5.1
+    other-transport
+via-params =
+    via-ttl /  via-maddr /  via-branch /  ; see  RFC 3261
+    via-received /  ; see  RFC 3261,   RFC 7118 - Section 5.3
+    via-compression /  ; see  RFC 3486 - Section 8
+    response-port /  ; see  RFC 3581 - Section 5
+    via-sip-sigcomp-id /  ; see  RFC 5049 - Section 9.1
+    via-alias /  ; see  RFC 5923 - Section 7
+    via-keep /  ; see  RFC 6223 - Section 8
+    oc /  oc-validity /  oc-seq /  oc-algo /  ; see  RFC 7339 - Section 9
+    received-realm /  ; see  RFC 8055 - Section 5.6.2
+    via-extension
+via-ttl =
+    "ttl"  EQUAL  ttl
+via-maddr =
+    "maddr"  EQUAL  host
+via-received =
+    "received"  EQUAL  ( IPv4address /  IPv6address )
+via-branch =
+    "branch"  EQUAL  token
+via-compression =
+    "comp"  EQUAL  ( "sigcomp" /  other-compression )
+response-port =
+    "rport"  [ EQUAL  1*DIGIT ]
+via-sip-sigcomp-id =
+    "sigcomp-id"  EQUAL  LDQUOT  *( qdtext /  quoted-pair )  RDQUOT
+via-alias =
+    "alias"
+via-keep =
+    "keep"  [ EQUAL  1*( DIGIT ) ]
+oc =
+    "oc"  [ EQUAL  oc-num ]
+oc-validity =
+    "oc-validity"  [ EQUAL  delta-ms ]
+oc-seq =
+    "oc-seq"  EQUAL  1*12DIGIT  "."  1*5DIGIT
+oc-algo =
+    "oc-algo"  EQUAL  DQUOTE  algo-list  *( COMMA  algo-list )  DQUOTE
+received-realm =
+    "received-realm"  EQUAL  LDQUOT  op-id  COLON  jws  LDQUOT
+ttl =
+    1*3DIGIT     ; 0 to 255
+other-compression =
+    token
+oc-num =
+    1*DIGIT
+algo-list =
+    "loss"  /
+    "rate"  /     ; see  RFC 7415 - Section 5
+    *( other-algo )
+other-algo =
+    %x41-5A /  %x61-7A /  %x30-39
+delta-ms =
+    1*DIGIT
+op-id =
+    token
+jws =
+    header  ".."  signature
+header =
+    1*base64-char 
+signature =
+    1*base64-char 
+base64-char =
+    ALPHA /  DIGIT /  "/" /  "+"
+via-extension =
+    generic-param
+
+; Warning  Header
+; SIP Header introduced in RFC 3261: see Section 20.43 for the description and Here for the ABNF.
+; See also: IANA
+Warning =
+    "Warning"  HCOLON  warning-value  *( COMMA  warning-value )
+    ; example:
+    ; Warning: 301 isi.edu "Incompatible network address type 'E.164'"
+
+warning-value =
+    warn-code  SP  warn-agent  SP  warn-text
+warn-code =
+    3DIGIT
+    ; 300  Incompatible network protocol:
+    ; One or more network protocols contained in the session description are not available.
+
+    ; 301  Incompatible network address formats:
+    ; One or more network address formats contained in the session description are not available.
+
+    ; 302  Incompatible transport protocol:
+    ; One or more transport protocols described in the session description are not available.
+
+    ; 303  Incompatible bandwidth units:
+    ; One or more bandwidth measurement units contained in the session description were not understood.
+
+    ; 304  Media type not available:
+    ; One or more media types contained in the session description are not available.
+
+    ; 305  Incompatible media format:
+    ; One or more media formats contained in the session description are not available.
+
+    ; 306  Attribute not understood:
+    ; One or more of the media attributes in the session description are not supported.
+
+    ; 307  Session description parameter not understood:
+    ; A parameter other than those listed above was not understood.
+
+    ; 308  Incompatible language specification:
+    ; Requested languages not supported. Supported languages are [list of supported languages]; supported media are: [list of supported media].
+    ; [RFC 8373]
+
+    ; 330  Multicast not available:
+    ; The site where the user is located does not support multicast.
+
+    ; 331  Unicast not available:
+    ; The site where the user is located does not support unicast communication (usually due to the presence of a firewall).
+
+    ; 370  Insufficient bandwidth:
+    ; The bandwidth specified in the session description or defined by the media exceeds that known to be available.
+
+    ; 380  SIPS Not Allowed:
+    ; The bandwidth specified in the session description or defined by the media exceeds that known to be available.
+    ; [RFC 5630]
+
+    ; 381  SIPS Required:
+    ; The UAS or proxy cannot process the request because the SIPS scheme is required.
+    ; [RFC 5630]
+
+    ; 399  Miscellaneous warning:
+    ; The warning text can include arbitrary information to be presented to a human user or logged. A system receiving this warning MUST NOT take any automated action.
+
+warn-agent =
+    hostport /  pseudonym
+warn-text =
+    quoted-string
+pseudonym =
+    token
+
+; WWW-Authenticate  Header
+; SIP Header introduced in RFC 3261: see Section 20.44 for the description and Here for the ABNF.
+WWW-Authenticate =
+    "WWW-Authenticate"  HCOLON  challenge
+    ; SIP example:
+    ; WWW-Authenticate: Digest realm="atlanta.example.com", qop="auth",
+    ;   nonce="84f1c1ae6cbe5ua9c8e88dfa3ecm3459",
+    ;   opaque="", stale=FALSE, algorithm=MD5
+
+auth-param =
+    1*( integrity-key /  cipher-key )
+integrity-key =
+    "ik"  EQUAL  ik-value
+cipher-key =
+    "ck"  EQUAL  ck-value
+ik-value =
+    LDQUOT  *( HEXDIG )  RDQUOT
+ck-value =
+    LDQUOT  *( HEXDIG )  RDQUOT
+    ; IMS example:
+    ; SIP/2.0 401 Unauthorized
+    ; ...
+    ; WWW-Authenticate: Digest realm="registrar.home1.net",
+    ;   nonce=base64(RAND + AUTN + server specific data),
+    ;   algorithm=AKAv1-MD5,
+    ;   ik="00112233445566778899aabbccddeeff",
+    ;   ck="ffeeddccbbaa11223344556677889900"
+    ; CSeq: 1 REGISTER
+
+
+    ; SIP Response Codes
+    ; Section 21 of RFC 3261  and  ABNF in RFC 3261  -  IANA
+Status-Code =
+    Informational /  Success /  Redirection /  Client-Error /  Server-Error /  Global-Failure /  extension-code
+extension-code =
+    3DIGIT
+Informational =
+    "100" /   ; Trying   21.1.1
+    "180" /   ; Ringing   21.1.2
+    "181" /   ; Call Is Being Forwarded   21.1.3
+    "182" /   ; Queued   21.1.4
+    "183" /   ; Session Progress   21.1.5
+    "199"  ; Early Dialog Terminated   RFC 6228 - Section 11.1
+Success =
+    "200" /   ; OK   21.2.1
+    "202" /   ; Accepted (Deprecated)   RFC 6665 - Section 8.3.1
+    "204"  ; No Notification   RFC 5839 - Section 8.1
+Redirection =
+    "300" /   ; Multiple Choices   21.3.1
+    "301" /   ; Moved Permanently   21.3.2
+    "302" /   ; Moved Temporarily   21.3.3
+    "305" /   ; Use Proxy   21.3.4
+    "380"  ; Alternative Service   21.3.5
+Client-Error =
+    "400" /   ; Bad Request   21.4.1
+    "401" /   ; Unauthorized   21.4.2
+    "402" /   ; Payment Required   21.4.3
+    "403" /   ; Forbidden   21.4.4
+    "404" /   ; Not Found   21.4.5
+    "405" /   ; Method Not Allowed   21.4.6
+    "406" /   ; Not Acceptable   21.4.7
+    "407" /   ; Proxy Authentication Required   21.4.8
+    "408" /   ; Request Timeout   21.4.9
+    "410" /   ; Gone   21.4.10
+    "412" /   ; Conditional Request Failed   RFC 3903 - Section 13.2
+    "413" /   ; Request Entity Too Large   21.4.11
+    "414" /   ; Request-URI Too Long   21.4.12
+    "415" /   ; Unsupported Media Type   21.4.13
+    "416" /   ; Unsupported URI Scheme   21.4.14
+    "417" /   ; Unknown Resource-Priority   RFC 4412 - Section 12.4
+    "420" /   ; Bad Extension   21.4.15
+    "421" /   ; Extension Required   21.4.16
+    "422" /   ; Session Interval Too Small   RFC 4028 - Section 12.2
+    "423" /   ; Interval Too Brief   21.4.17
+    "424" /   ; Bad Location Information   RFC 6442 - Section 8.4
+    "425" /   ; Bad Alert Message   RFC 8876 - Section 10.3
+    "428" /   ; Use Identity Header   RFC 4474 - Section 14.2
+    "429" /   ; Provide Referrer Identity   RFC 3892 - Section 8
+    "430" /   ; Flow Failed   RFC 5626 - Section 11.5
+    "433" /   ; Anonymity Disallowed   RFC 5079 - Section 6
+    "436" /   ; Bad Identity Info   RFC 8224 - Section 13.2
+    "437" /   ; Unsupported Credential   RFC 8224 - Section 13.2
+    "438" /   ; Invalid Identity Header   RFC 4474 - Section 14.5 - Section 14.2
+    "439" /   ; First Hop Lacks Outbound Support   RFC 5626 - Section 11.6
+    "440" /   ; Max-Breadth Exceeded   RFC 5393 - Section 6.2
+    "469" /   ; Bad Info Package   RFC 6086 - Section 11.6
+    "470" /   ; Consent Needed   RFC 5360 - Section 6.1
+    "480" /   ; Temporarily Unavailable   21.4.18
+    "481" /   ; Call/Transaction Does Not Exist   21.4.19
+    "482" /   ; Loop Detected   21.4.20
+    "483" /   ; Too Many Hops   21.4.21
+    "484" /   ; Address Incomplete   21.4.22
+    "485" /   ; Ambiguous   21.4.23
+    "486" /   ; Busy Here   21.4.24
+    "487" /   ; Request Terminated   21.4.25
+    "488" /   ; Not Acceptable Here   21.4.26
+    "489" /   ; Bad Event   RFC 6665 - Section 8.3.2
+    "491" /   ; Request Pending   21.4.27
+    "493" /   ; Undecipherable   21.4.28
+    "494"  ; Security Agreement Required   RFC 3329 - Section 6.4
+Server-Error =
+    "500" /   ; Server Internal Error   21.5.1
+    "501" /   ; Not Implemented   21.5.2
+    "502" /   ; Bad Gateway   21.5.3
+    "503" /   ; Service Unavailable   21.5.4
+    "504" /   ; Server Time-out   21.5.5
+    "505" /   ; Version Not Supported   21.5.6
+    "513" /   ; Message Too Large   21.5.7
+    "555" /   ; Push Notification Service Not Supported   RFC 8599 - Section 8.1
+    "580"  ; Precondition Failure   RFC 3312 - Section 8
+Global-Failure =
+    "600" /   ; Busy Everywhere   21.6.1
+    "603" /   ; Decline   21.6.2
+    "604" /   ; Does Not Exist Anywhere   21.6.3
+    "606" /   ; Not Acceptable   21.6.4
+    "607" /   ; Unwanted   RFC 8197 - Section 5
+    "608"  ; Rejected   RFC 8688 - Section 5
+
+    ; ABNF for SIP or SIPS URI
+    ; Section 19.1 of RFC 3261  and  ABNF in RFC 3261
+SIP-URI =
+    "sip:"   [ userinfo ]  hostport  uri-parameters  [ headers ]
+SIPS-URI =
+    "sips:"  [ userinfo ]  hostport  uri-parameters  [ headers ]
+
+userinfo =
+    ( user /  telephone-subscriber )  [ ":"  password ]  "@"
+    ; examples:
+    ;   sip:alice@atlanta.com
+    ;   sip:alice:secretword@atlanta.com;transport=tcp
+    ;   sip:+1-212-555-1212:1234@gateway.com;user=phone
+
+user  =
+    1*( unreserved /  escaped /  user-unreserved )
+user-unreserved =
+    "&" /  "=" /  "+" /  "$" /  "," /  ";" /  "?" /  "/"
+password =
+    *( unreserved /  escaped /  "&" /  "=" /  "+" /  "$" /  "," )
+
+hostport =
+    host  [ ":"  port ]
+    ; examples:
+    ;   sip:alice@atlanta.com
+    ;   sip:alice:secretword@atlanta.com;transport=tcp
+    ;   sip:+1-212-555-1212:1234@gateway.com;user=phone
+    ;   sip:alice@192.0.2.4
+
+host =
+    hostname /  IPv4address /  IPv6reference
+hostname =
+    *( domainlabel  "." )  toplabel  [ "." ]
+domainlabel =
+    alphanum /  alphanum  *( alphanum /  "-" )  alphanum
+toplabel =
+    ALPHA /  ALPHA  *( alphanum /  "-" )  alphanum
+IPv6reference =
+    "["  IPv6address  "]"
+IPv6address =
+    ;  as updated by:   RFC 5954 - Section 4.1
+    6( h16  ":" )  ls32  /
+    "::"  5( h16  ":" )  ls32  /
+    [ h16 ]  "::"  4( h16  ":" )  ls32  /
+    [ *1( h16  ":" )  h16 ]  "::"  3( h16  ":" )  ls32  /
+    [ *2( h16  ":" )  h16 ]  "::"  2( h16  ":" )  ls32  /
+    [ *3( h16  ":" )  h16 ]  "::"  h16  ":"    ls32  /
+    [ *4( h16  ":" )  h16 ]  "::"  ls32  /
+    [ *5( h16  ":" )  h16 ]  "::"  h16  /
+    [ *6( h16  ":" )  h16 ]  "::"
+h16 =
+    1*4HEXDIG
+ls32 =
+    ( h16   ":"   h16 ) /  IPv4address
+IPv4address =
+    dec-octet  "."  dec-octet  "."  dec-octet  "."  dec-octet
+dec-octet =
+    DIGIT /  ; 0-9
+    %x31-39   DIGIT /  ; 10-99
+    "1"  2DIGIT /  ; 100-199
+    "2"  %x30-34   DIGIT /  ; 200-249
+    "25"  %x30-35  ; 250-255
+port =
+    1*DIGIT
+
+uri-parameters =
+    *( ";"  uri-parameter )
+uri-parameter =
+    transport-param /  user-param /  method-param /  ; RFC 3261
+ttl-param /  maddr-param /  lr-param /  ; RFC 3261
+    compression-param /  ; RFC 3486
+    annc-parameters /  dialog-parameters /  ; RFC 4240
+    target-param /  cause-param /  ; RFC 4458
+    uri-sip-sigcomp-id /  ; RFC 5049
+    dialog-param /  ; RFC 5552
+    maxage-param /  maxstale-param /  method-param /  ; RFC 5552
+    postbody-param /  ccxml-param /  aai-param /  ; RFC 5552
+    ob-param /  ; RFC 5626
+    gr-param /  ; RFC 5627
+    bnc-param /  sg-param /  ; RFC 6140
+    m-param /  ; RFC 6910
+    iotl-param /  ; RFC 7549
+    pn-param /  ; RFC 8599
+    pn-prid /  ; RFC 8599
+    pn-provider /  ; RFC 8599
+    pn-purr /  ; RFC 8599
+    orig /  ; 3GPP TS 24.229
+    sos-param /  ; 3GPP TS 24.229
+    other-param
+other-param =
+    pname  [ "="  pvalue ]
+pname =
+    1*paramchar
+pvalue =
+    1*paramchar
+paramchar =
+    param-unreserved /  unreserved /  escaped
+param-unreserved =
+    "[" /  "]" /  "/" /  ":" /  "&" /  "+" /  "$"
+transport-param =
+    "transport="  (
+    "udp" /  "tcp" /  "sctp" /  "tls" / 
+    "ws"     ; WebSocket:   see  RFC 7118
+    other-transport )
+    ; example:
+    ;   sip:alice:secretword@atlanta.com;transport=tcp
+
+other-transport =
+    token
+
+user-param =
+    "user="  (
+    "phone" /  "ip" / 
+    "dialstring" /  ; see  RFC 4967
+    other-user )
+    ; example:
+    ;   sip:1-212-555-1212:1234@gateway.com;user=phone
+
+other-user =
+    token
+    ; the following is defined in RFC 4967
+dialstring =
+    dialstring-digits  context
+dialstring-digits =
+    *dialstring-element  dialstring-digit   *dialstring-element
+dialstring-digit =
+    HEXDIG /  "*" /  "#"
+dialstring-element =
+    dialstring-digit /  "P" /  "X" /  visual-separator
+    ; example:
+    ;   sip:123;phone-context=atlanta.example.com@example.com;user=dialstring
+
+
+method-param =
+    "method="   Method
+    ; example:
+    ;   sip:atlanta.com;method=REGISTER?to=alice%40atlanta.com
+
+
+ttl-param =
+    "ttl="   ttl
+    ; example:
+    ;   sip:alice@atlanta.com;maddr=239.255.255.1;ttl=15
+
+maddr-param =
+    "maddr="   host
+    ; example:
+    ;   sip:alice@atlanta.com;maddr=239.255.255.1;ttl=15
+
+lr-param =
+    "lr"
+    ; example:
+    ;   Route: <sip:ss2.biloxi.example.com;lr>
+
+compression-param =
+    "comp="   ( "sigcomp" /  other-compression )
+    ; example:
+    ;   sip:alice@atlanta.com;comp=sigcomp
+
+other-compression =
+    token
+ANNC-URL =
+    sip-ind  annc-ind  "@"  hostport  annc-parameters  uri-parameters
+    ; example:
+    ;   sip:annc@ms.example.net; \
+    ;       play=file://fs.example.net//clips/my-intro.dvi; \
+    ;       content-type=video/mpeg%3bencode%d3314M-25/625-50
+
+sip-ind =
+    "sip:" /  "sips:"
+annc-ind =
+    "annc"
+annc-parameters =
+    ";"  play-param
+    [ ";"  delay-param ]
+    [ ";"  duration-param ]
+    [ ";"  repeat-param ]
+    [ ";"  locale-param ]
+    [ ";"  variable-params ]
+    [ ";"  extension-params ]
+play-param =
+    "play="  prompt-url
+prompt-url =
+    "/provisioned/"  announcement-id
+announcement-id =
+    1*( ALPHA /  DIGIT )
+; content-param =
+;     "content-type="  MIME-type
+delay-param =
+    "delay="  delay-value
+delay-value =
+    1*DIGIT
+duration-param =
+    "duration="  duration-value
+duration-value =
+    1*DIGIT
+repeat-param =
+    "repeat="  repeat-value
+repeat-value =
+    1*DIGIT /  "forever"
+locale-param =
+    "locale="  token
+variable-params =
+    param-name  "="  variable-value
+param-name =
+    "param"  DIGIT
+variable-value =
+    1*( ALPHA /  DIGIT )
+extension-params =
+    extension-param  [ ";"  extension-params ]
+extension-param =
+    token  "="  token
+
+DIALOG-URL =
+    sip-ind  dialog-ind  "@"  hostport  dialog-parameters
+dialog-ind =
+    "dialog"
+dialog-parameters =
+    ";"  dialog-param  [ vxml-parameters ]  [ uri-parameters ]
+dialog-param =
+    "voicexml="  vxml-url
+vxml-parameters =
+    vxml-param  [ vxml-parameters ]
+vxml-param =
+    ";"  vxml-keyword  "="  vxml-value
+vxml-keyword =
+    token
+vxml-value =
+    token
+target-param =
+    "target"   EQUAL   pvalue
+    ; example:
+    ;   sip:voicemail@example.com;target=bob%40example.com;cause=486
+
+cause-param =
+    "cause"   EQUAL   Status-Code
+    ; 404     Unknown/Not available
+    ; 486     User busy
+    ; 408     No reply
+    ; 302     Unconditional
+    ; 487     Deflection during alerting
+    ; 480     Deflection immediate response
+    ; 503     Mobile subscriber not reachable
+    ; 380     Service number translation   RFC 8119 - Section 2
+    ; example:
+    ;   sip:voicemail@example.com;target=bob%40example.com;cause=486
+
+uri-sip-sigcomp-id =
+    "sigcomp-id"   "="  1*paramchar
+dialog-param =
+    "voicexml="  vxml-url     ;  vxml-url follows the URI syntax defined in RFC 3986
+maxage-param =
+    "maxage="  1*DIGIT
+maxstale-param =
+    "maxstale="  1*DIGIT
+method-param =
+    "method="  ( "get" /  "post" )
+postbody-param =
+    "postbody="  token
+ccxml-param =
+    "ccxml="  json-value
+aai-param =
+    "aai="  json-value
+json-value =
+    false /  null /  true /  object /  array /  number /  string
+    ;  defined in   RFC 7159
+    ; example:
+    ;   sip:dialog@mediaserver.example.com; \
+    ;       voicexml=http://appserver.example.com/promptcollect.vxml; \
+    ;       maxage=3600;maxstale=0
+false = %x66.61.6c.73.65   ; false
+null  = %x6e.75.6c.6c      ; null
+true  = %x74.72.75.65      ; true
+object =
+    begin-object [ member *( value-separator member ) ] end-object
+array =
+    begin-array [ json-value *( value-separator json-value ) ] end-array
+number = [ minus ] int [ frac ] [ exp ]
+decimal-point = %x2E       ; .
+digit1-9 = %x31-39         ; 1-9
+e = %x65 / %x45            ; e E
+exp = e [ minus / plus ] 1*DIGIT
+frac = decimal-point 1*DIGIT
+int = zero / ( digit1-9 *DIGIT )
+minus = %x2D               ; -
+plus = %x2B                ; +
+zero = %x30                ; 0
+string =
+    quotation-mark *char quotation-mark
+char =
+    unescaped /
+    escape (
+        %x22 / ; "    quotation mark  U+0022
+        %x5C / ; \    reverse solidus U+005C
+        %x2F / ; /    solidus         U+002F
+        %x62 / ; b    backspace       U+0008
+        %x66 / ; f    form feed       U+000C
+        %x6E / ; n    line feed       U+000A
+        %x72 / ; r    carriage return U+000D
+        %x74 / ; t    tab             U+0009
+        %x75 4HEXDIG )  ; uXXXX                U+XXXX
+escape = %x5C              ; \
+quotation-mark = %x22      ; "
+unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
+begin-array     = ws %x5B ws  ; [ left square bracket
+begin-object    = ws %x7B ws  ; { left curly bracket
+end-array       = ws %x5D ws  ; ] right square bracket
+end-object      = ws %x7D ws  ; } right curly bracket
+name-separator  = ws %x3A ws  ; : colon
+value-separator = ws %x2C ws  ; , comma
+member = string name-separator json-value
+ws = *(
+    %x20 /  ; Space
+    %x09 /  ; Horizontal tab
+    %x0A /  ; Line feed or New line
+    %x0D )  ; Carriage return
+
+;  vxml-url follows the URI syntax defined in RFC 3986
+vxml-url =
+    scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+hier-part =
+    "//" authority path-abempty
+    / path-absolute
+    / path-rootless
+    / path-empty
+path-absolute = "/" [ segment-nz *( "/" segment ) ]
+path-rootless = segment-nz *( "/" segment )
+path-empty    = 0<pchar>
+segment-nz    = 1*pchar
+
+
+ob-param =
+    "ob"
+    ; example:
+    ;   NOTIFY sip:192.0.2.2;transport=tcp;ob SIP/2.0
+
+gr-param =
+    "gr"   [ "="  pvalue ]
+    ; examples:
+    ;   sip:alice@example.com;gr=kjh29x97us97d
+    ;   sip:asd887f9dfkk76690@example.com;gr
+
+bnc-param =
+    "bnc"
+    ; example:
+    ;   Contact: <sip:198.51.100.3:5060;bnc>
+
+sg-param =
+    "sg"
+    ; example:
+    ;   INVITE sip:+12145550102@198.51.100.3;sg=00:05:03:5e:70:a6 SIP/2.0
+
+m-param =
+    "m="  ( "BS" /  "NR" /  "NL" )
+    ; example:
+    ;   SUBSCRIBE sip:456@b.com;m=NR
+
+iotl-param =
+    iotl-tag  "="  iotl-value  [ "."  iotl-value ]
+iotl-tag =
+    "iotl"
+iotl-value =
+    "homea-homeb" /  "homeb-visitedb" /  "visiteda-homea" /  "visiteda-homea" /  "homea-visiteda" /  "visiteda-homeb" /  other-iotl
+other-iotl =
+    1*iotl-char
+iotl-char =
+    alphanum /  "-"
+pn-provider =
+    "pn-provider"   [ EQUAL   pvalue ]
+pn-param =
+    "pn-param"   EQUAL   pvalue
+pn-prid =
+    "pn-prid"   EQUAL   pvalue
+
+pn-purr =
+    "pn-purr"   EQUAL   pvalue
+orig =
+    "orig"
+sos-param =
+    "sos"
+headers =
+    "?"  header  *( "&"  header )
+    ; examples:
+    ;   sip:atlanta.com;method=REGISTER?to=alice%40atlanta.com
+    ;   sips:alice@atlanta.com?subject=project%20x&priority=urgent
+
+header =
+    hname  "="  hvalue
+hname =
+    1*( hnv-unreserved /  unreserved /  escaped )
+hvalue =
+    *( hnv-unreserved /  unreserved /  escaped )
+hnv-unreserved =
+    "[" /  "]" /  "/" /  "?" /  ":" /  "+" /  "$"
+absoluteURI =
+    scheme  ":"  ( hier-part /  opaque-part )
+scheme =
+    ALPHA  *( ALPHA /  DIGIT /  "+" /  "-" /  "." )
+hier-part =
+    ( net-path /  abs-path )  [ "?"  query ]
+net-path =
+    "//"  authority  [ abs-path ]
+abs-path =
+    "/"  path-segments
+query =
+    *uric
+authority =
+    srvr /  reg-name
+srvr =
+    [  [ userinfo]  hostport ]
+reg-name =
+    1*( unreserved /  escaped /  "$" /  "," /  ";" /  ":" /  "@" /  "&" /  "=" /  "+" )
+path-segments =
+    segment  *( "/"  segment )
+segment =
+    *pchar  *( ";"  param )
+param =
+    *pchar
+pchar =
+    unreserved /  escaped /  ":" /  "@" /  "&" /  "=" /  "+" /  "$" /  ","
+opaque-part =
+    uric-no-slash  *uric
+uric =
+    reserved /  unreserved /  escaped
+uric-no-slash =
+    unreserved /  escaped /  ";" /  "?" /  ":" /  "@" /  "&" /  "=" /  "+" /  "$" /  ","
+telephone-uri =
+    "tel:"  telephone-subscriber
+    ; examples:
+    ;   tel:+1-201-555-0123
+    ;   tel:7042;phone-context=example.com
+    ;   tel:863-1234;phone-context=+1-914-555
+
+telephone-subscriber =
+    global-number /  local-number
+global-number =
+    global-number-digits  *par
+global-number-digits =
+    "+"  *phonedigit  DIGIT  *phonedigit
+phonedigit =
+    DIGIT /  [ visual-separator ]
+local-number =
+    local-number-digits  *par  context  *par
+local-number-digits =
+    *phonedigit-hex  ( HEXDIG /  "*" /  "#" )  *phonedigit-hex
+phonedigit-hex =
+    HEXDIG /  "*" /  "#" /  [ visual-separator ]
+context =
+    ";phone-context="  descriptor
+descriptor =
+    domainname  /  global-number-digits
+domainname =
+    *( domainlabel  "." )  toplabel  [ "." ]
+domainlabel =
+    alphanum /  alphanum  *( alphanum /  "-" )  alphanum
+toplabel =
+    ALPHA /  ALPHA  *( alphanum /  "-" )  alphanum
+par =
+    parameter /  extension /  isdn-subaddress /  ; see   RFC 3966
+    rn /  cic /  npdi /  ; see  RFC 4694 - Section 4
+    isub-encoding /  ; see  RFC 4715 - Section 5
+    enum-dip-indicator /  ; see  RFC 4759 - Section 3
+    trunk-group /  trunk-context /  ; see  RFC 4904 - Section 5
+    premrate /  ; see  3GPP TS 24.229 - Section 7.2A.17
+    verstat  ; see  3GPP TS 24.229 - Section 7.2A.20
+parameter =
+    ";"  pname  [ "="  pvalue ]
+pname =
+    1*( alphanum /  "-" )
+pvalue =
+    1*paramchar
+paramchar =
+    param-unreserved /  unreserved /  pct-encoded
+param-unreserved =
+    "[" /  "]" /  "/" /  ":" /  "&" /  "+" /  "$"
+extension =
+    ";ext="  1*phonedigit
+isdn-subaddress =
+    ";isub="  1*uric
+uric =
+    reserved /  unreserved /  pct-encoded
+rn =
+    ";rn="  ( global-rn /  local-rn )
+cic =
+    ";cic="  ( global-cic /  local-cic )
+npdi =
+    ";npdi"
+global-rn =
+    global-hex-digits
+local-rn =
+    1*hex-phonedigit   rn-context
+rn-context =
+    ";rn-context="  rn-descriptor
+rn-descriptor =
+    domainname /  global-hex-digits
+global-hex-digits =
+    "+"  1*3( DIGIT )  *hex-phonedigit
+hex-phonedigit =
+    HEXDIG /  visual-separator
+global-cic =
+    global-hex-digits
+local-cic =
+    1*hex-phonedigit  cic-context
+cic-context =
+    ";cic-context="  rn-descriptor
+isub-encoding =
+    isub-encoding-tag  "="  isub-encoding-value
+isub-encoding-tag =
+    "isub-encoding"
+isub-encoding-value =
+    "nsap-ia5" /  "nsap-bcd" /  "nsap" /  token
+enum-dip-indicator =
+    ";enumdi"
+trunk-group =
+    ";tgrp="  trunk-group-label
+trunk-context =
+    ";trunk-context="  descriptor
+trunk-group-label =
+    1*( unreserved /  escaped /  trunk-group-unreserved )
+trunk-group-unreserved =
+    "/" /  "&" /  "+" /  "$"
+pct-encoded =
+    "%"  HEXDIG  HEXDIG
+premrate =
+    premrate-tag  "="  premrate-value
+premrate-tag =
+    "premium-rate"
+premrate-value =
+    "information" /  "entertainment"
+verstat =
+    verstat-tag  "="  verstat-value
+verstat-tag =
+    "verstat"
+verstat-value =
+    "TN-Validation-Passed" /  "TN-Validation-Failed" /  "No-TN-Validation" /  other-value
+other-value =
+    token
+visual-separator =
+    "-" /  "." /  "(" /  ")"
+
+; SIP Headers' common rules
+option-tag =
+    token
+    ; see   IANA
+    ; 100rel  -> RFC 3262 - Section 8.1
+    ; 199  -> RFC 6228 - Section 11.2
+    ; answermode  -> RFC 5373 - Section 8.3
+    ; early-session  -> RFC 3959 - Section 9
+    ; eventlist  -> RFC 4662 - Section 8.1
+    ; explicitsub  -> RFC 7614 - Section 9.1
+    ; from-change  -> RFC 4916 - Section 6
+    ; geolocation-http  -> RFC 6442 - Section 8.3
+    ; geolocation-sip  -> RFC 6442 - Section 8.3
+    ; gin  -> RFC 6140 - Section 9.1
+    ; gruu  -> RFC 5627 - Section 11.3
+    ; histinfo  -> RFC 7044 - Section 14.1
+    ; ice  -> RFC 5768 - Section 7.1
+    ; join  -> RFC 3911 - Section 10.2
+    ; multiple-refer  -> RFC 5368 - Section 11
+    ; norefersub  -> RFC 4488 - Section 7
+    ; nosub  -> RFC 7614 - Section 9.2
+    ; outbound  -> RFC 5626 - Section 11.4
+    ; path  -> RFC 3327 - Section 7
+    ; policy  -> RFC 6794 - Section 6.4
+    ; precondition  -> RFC 3312 - Section 11
+    ; pref  -> RFC 3840 - Section 12.3
+    ; privacy  -> RFC 3323 - Section 7
+    ; recipient-list-invite  -> RFC 5366 - Section 8
+    ; recipient-list-message  -> RFC 5365 - Section 11
+    ; recipient-list-subscribe  -> RFC 5367 - Section 9.2
+    ; record-aware  -> RFC 7866 - Section 11.1.2
+    ; replaces  -> RFC 3891 - Section 9.2
+    ; resource-priority  -> RFC 4412 - Section 12.3
+    ; sdp-anat  -> RFC 4092 - Section 7
+    ; sec-agree  -> RFC 3329 - Section 6.5
+    ; siprec  -> RFC 7866 - Section 11.1.1
+    ; tdialog  -> RFC 4538 - Section 11.3
+    ; timer  -> RFC 4028 - Section 12.3
+    ; uui  -> RFC 7433 - Section 6.6
+accept-param =
+    ( "q"  EQUAL  qvalue ) /  generic-param
+qvalue =
+    ( "0"  [ "."  0*3DIGIT ] ) /  ( "1"  [ "."  0*3( "0" ) ] )
+generic-param =
+    token  [ EQUAL   gen-value ]
+gen-value =
+    token /  host /  quoted-string
+name-addr =
+    [ display-name ]  LAQUOT  addr-spec  RAQUOT
+    ;  example:  Bob <sip:bob@biloxi.example.com>
+display-name =
+    *( token  LWS ) /  quoted-string
+addr-spec =
+    SIP-URI /  SIPS-URI /  absoluteURI
+callid =
+    word  [ "@"  word ]
+delta-seconds =
+    1*DIGIT
+
+    ; SIP Basic Rules
+    ; Section 25.1 of RFC 3261
+alphanum =
+    ALPHA /  DIGIT
+LHEX =
+    DIGIT /  %x61-66
+    ; lowercase a-f
+LWS =
+    [ CRLF ]  1*WSP
+    ; linear whitespace
+SWS =
+    [ LWS ]
+    ; sep whitespace
+HCOLON =
+    *( SP /  HTAB )   ":"   SWS
+separators =
+    "(" /  ")" /  "<" /  ">" /  "@" /  "," /  ";" /  ":" /  "\" /  DQUOTE /  "/" /  "[" /  "]" /  "?" /  "=" /  "{" /  "}" /  SP /  HTAB
+STAR =
+    SWS  "*"  SWS
+    ; asterisk
+SLASH =
+    SWS  "/"  SWS
+    ; slash
+EQUAL =
+    SWS  "="  SWS
+    ; equal
+LPAREN =
+    SWS  "("  SWS
+    ; left parenthesis
+RPAREN =
+    SWS  ")"  SWS
+    ; right parenthesis
+LAQUOT =
+    SWS  "<"
+    ; left angle quote
+RAQUOT =
+    ">"  SWS
+    ; right angle quote
+COMMA =
+    SWS  ","  SWS
+    ; comma
+SEMI =
+    SWS  ";"  SWS
+    ; semicolon
+COLON =
+    SWS  ":"  SWS
+    ; colon
+LDQUOT =
+    SWS  DQUOTE
+    ; open double quotation mark
+RDQUOT =
+    DQUOTE  SWS
+    ; close double quotation mark
+token =
+    1*( alphanum /  "-" /  "." /  "!" /  "%" /  "*" /  "_" /  "+" /  "`" /  "'" /  "~" )
+quoted-string =
+    SWS   DQUOTE   *( qdtext /  quoted-pair )   DQUOTE
+qdtext =
+    LWS /  %x21 /  %x23-5B /  %x5D-7E /  UTF8-NONASCII
+quoted-pair =
+    "\"  ( %x00-09 /  %x0B-0C /  %x0E-7F )
+comment =
+    LPAREN   *( ctext /  quoted-pair /  comment )   RPAREN
+ctext =
+    %x21-27 /  %x2A-5B /  %x5D-7E /  UTF8-NONASCII /  LWS
+word =
+    1*( alphanum /  "-" /  "." /  "!" /  "%" /  "*" /  "_" /  "+" /  "`" /  "'" /  "~" /  "(" /  ")" /  "<" /  ">" /  ":" /  "\" /  DQUOTE /  "/" /  "[" /  "]" /  "?" /  "{" /  "}" )
+TEXT-UTF8-TRIM =
+    1*TEXT-UTF8char   *( *LWS   TEXT-UTF8char )
+TEXT-UTF8char =
+    %x21-7E /  UTF8-NONASCII
+UTF8-NONASCII =
+    %xC0-DF   1UTF8-CONT /
+    %xE0-EF   2UTF8-CONT /
+    %xF0-F7   3UTF8-CONT /
+    %xF8-FB   4UTF8-CONT /
+    %xFC-FD   5UTF8-CONT
+UTF8-CONT =
+    %x80-BF
+escaped =
+    "%"   HEXDIG   HEXDIG
+mark =
+    "-" /  "_" /  "." /  "!" /  "~" /  "*" /  "'" /  "(" /  ")"
+reserved =
+    ";" /  "/" /  "?" /  ":" /  "@" /  "&" /  "=" /  "+" /  "$" /  ","
+unreserved =
+    alphanum /  mark
+
+    ; ABNF Core Rules
+    ; RFC 5234 - Appendix B.1
+OCTET =
+    %x00-FF
+    ; 8 bits of data
+CHAR =
+    %x01-7F
+    ; any 7-bit US-ASCII character,
+    ; excluding NUL
+VCHAR =
+    %x21-7E
+    ; visible (printing) characters
+ALPHA =
+    %x41-5A /  %x61-7A
+    ; A-Z  /  a-z
+DIGIT =
+    %x30-39
+    ; 0-9
+CTL =
+    %x00-1F /  %x7F
+    ; any US-ASCII control character:
+    ; (octets 0 - 31) and DEL (127)
+HTAB =
+    %x09
+    ; horizontal tab
+LF =
+    %x0A
+    ; linefeed
+CR =
+    %x0D
+    ; carriage return
+SP =
+    %x20
+    ; space
+DQUOTE =
+    %x22
+    ; " (Double Quote)
+BIT =
+    "0" /  "1"
+HEXDIG =
+    DIGIT /  "A" /  "B" /  "C" /  "D" /  "E" /  "F"
+    ; Note: according to the 'char-val' rule,
+    ; letters (A-F) are case insensitive
+CRLF =
+    CR  LF
+    ; Internet standard newline
+WSP =
+    SP /  HTAB
+    ; white space
+LWSP =
+    *( WSP /  CRLF  WSP )
+    ; linear white space (past newline)
