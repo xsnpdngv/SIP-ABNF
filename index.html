@@ -1,1 +1,234 @@
-sip.abnf
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABNF Rule Walker</title>
+<style>
+    body { font-family: sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; background: #fafafa; color: #24292f; }
+    #container { display: flex; gap: 15px; flex-direction: column; }
+
+    .panel { background: white; padding: 15px; border-radius: 6px; border: 1px solid #d0d7de; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+
+    .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+    input[type="text"] { flex: 1; padding: 10px; font-size: 14px; border: 1px solid #d0d7de; border-radius: 4px; }
+
+    textarea {
+        width: 100%; height: 200px; font-family: monospace; font-size: 14px;
+        padding: 15px; box-sizing: border-box; border: 1px solid #d0d7de; border-radius: 6px;
+        margin-bottom: 10px;
+    }
+
+    button {
+        padding: 10px 18px; font-size: 14px; cursor: pointer; background: #0969da;
+        color: white; border: none; border-radius: 4px; font-weight: bold;
+    }
+    button:hover { background: #0550ae; }
+    button.secondary { background: #eaedf0; color: #24292f; }
+    button.secondary:hover { background: #d0d7de; }
+
+    .presets { display: flex; gap: 10px; align-items: center; font-size: 14px; color: #57606a; flex-wrap: wrap; }
+
+    #output-container {
+        background: white; padding: 20px; border: 1px solid #d0d7de;
+        border-radius: 6px; min-height: 400px; overflow-x: auto;
+    }
+    pre { font-family: monospace; font-size: 14.5px; white-space: pre-wrap; line-height: 1.6; margin: 0; }
+
+    /* Syntax Highlighting */
+    .definition {
+        font-weight: bold; color: #cf222e;
+        background-color: #ffebe9; padding: 2px 4px; border-radius: 4px;
+    }
+    .reference { color: #0969da; text-decoration: none; border-bottom: 1px dotted #0969da; }
+    .reference:hover { background-color: #ddf4ff; text-decoration: none; }
+    .literal { color: #0a3069; font-weight: 500; }
+    .value { color: #d97706; font-weight: bold; } /* Hex/Bin/Dec Values */
+
+    /* Comments Styling */
+    .comment { color: #6e7781; font-style: italic; }
+    .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
+    .comment .reference:hover { background-color: #f6f8fa; }
+
+    /* Target & Inline Back Button Styling */
+    .rule-wrapper { scroll-margin-top: 60px; }
+
+    .inline-back-btn {
+        display: none;
+        cursor: pointer; background: #eaedf0; color: #57606a; border: 1px solid #d0d7de;
+        border-radius: 4px; padding: 1px 6px; margin-right: 8px; font-size: 12px;
+        font-family: sans-serif; user-select: none; vertical-align: middle; text-decoration: none;
+    }
+    .inline-back-btn:hover { background: #d0d7de; color: #24292f; }
+
+    .rule-wrapper:target .inline-back-btn { display: inline-block; }
+    .rule-wrapper:target .definition {
+        animation: highlight-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: inline-block;
+    }
+
+    @keyframes highlight-bounce {
+        0%   { transform: scale(1); background-color: #ffebe9; }
+        30%  { transform: scale(1.15); background-color: #fff8c5; box-shadow: 0 0 12px #fff8c5; z-index: 10; position: relative; border-radius: 6px; }
+        100% { transform: scale(1); background-color: #ffebe9; }
+    }
+</style>
+</head>
+<body>
+
+<h2>ABNF Rule Walker</h2>
+<div id="container">
+
+    <div class="panel">
+        <div class="input-group">
+            <input type="text" id="url-input" placeholder="Enter URL for textual ABNF of EBNF definition..." />
+            <button id="fetch-btn" onclick="fetchSyntax()">Fetch & Generate</button>
+        </div>
+
+        <div class="presets">
+            <strong>Quick Load:</strong>
+            <button class="secondary" onclick="loadPreset('https://raw.githubusercontent.com/xsnpdngv/SIP-ABNF/refs/heads/main/sip.abnf')">SIP (RFC 3261)</button>
+            <button class="secondary" onclick="loadPreset('https://raw.githubusercontent.com/xsnpdngv/SIP-ABNF/refs/heads/main/abnf.abnf')">ABNF (RFC 5234)</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <textarea id="syntax-input" placeholder="...or paste raw ABNF/EBNF text directly here"></textarea>
+        <button onclick="convertSyntax()">Generate</button>
+    </div>
+
+    <div id="output-container">
+        <pre id="output"><em>Rule walker will appear here...</em></pre>
+    </div>
+</div>
+
+<script>
+const CORE_RULES = `
+; =========================================
+; RFC 5234 CORE ABNF RULES
+; =========================================
+
+ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
+BIT            =  "0" / "1"
+CHAR           =  %x01-7F             ; any 7-bit US-ASCII character, excluding NUL
+CR             =  %x0D                ; carriage return
+CRLF           =  CR LF               ; Internet standard newline
+CTL            =  %x00-1F / %x7F      ; controls
+DIGIT          =  %x30-39             ; 0-9
+DQUOTE         =  %x22                ; " (Double Quote)
+HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+HTAB           =  %x09                ; horizontal tab
+LF             =  %x0A                ; linefeed
+LWSP           =  *(WSP / CRLF WSP)   ; linear white space (past newline)
+OCTET          =  %x00-FF             ; 8 bits of data
+SP             =  %x20
+VCHAR          =  %x21-7E             ; visible (printing) characters
+WSP            =  SP / HTAB           ; white space
+`;
+
+async function fetchSyntax() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) return alert("Please enter a URL first.");
+
+    const fetchBtn = document.getElementById('fetch-btn');
+    fetchBtn.innerText = "Loading...";
+    fetchBtn.disabled = true;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+        const text = await response.text();
+        document.getElementById('syntax-input').value = text;
+        convertSyntax();
+    } catch (err) {
+        alert("Failed to fetch syntax. The server may be blocking cross-origin requests (CORS). Try pasting the text manually!\n\nError: " + err.message);
+    } finally {
+        fetchBtn.innerText = "Fetch & Generate";
+        fetchBtn.disabled = false;
+    }
+}
+
+function loadPreset(url) {
+    document.getElementById('url-input').value = url;
+    fetchSyntax();
+}
+
+function convertSyntax() {
+    let rawText = document.getElementById('syntax-input').value;
+    if (!rawText.trim()) {
+        document.getElementById('output').innerHTML = "<em>Please enter or fetch syntax first.</em>";
+        return;
+    }
+
+    // Append core rules
+    let text = rawText + "\n\n" + CORE_RULES;
+
+    // 1. Escape HTML safely
+    text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // 2. Protect string literals
+    // Fix: Stop at newlines, and negative lookbehind `(?<![a-zA-Z])` prevents catching English apostrophes like "Don't"
+    let literals = [];
+    text = text.replace(/(?<![a-zA-Z])(["'])(?:(?!\1|\n|\r).)*?\1/g, (match) => {
+        literals.push(match);
+        return `__LITERAL_${literals.length - 1}__`;
+    });
+
+    // 3. Find rule definitions
+    const rules = new Set();
+    const defRegex = /^[ \t]*([a-zA-Z][a-zA-Z0-9_-]*)[ \t]*(?:=|\/=|::=|:)/gm;
+    let match;
+    while ((match = defRegex.exec(text)) !== null) {
+        rules.add(match[1]);
+    }
+
+    // 4. Mark references temporarily
+    const identRegex = /(?<![a-zA-Z0-9_-])([a-zA-Z][a-zA-Z0-9_-]*)(?![a-zA-Z0-9_-])/g;
+    text = text.replace(identRegex, (m) => {
+        if (rules.has(m)) return `<span class="temp-token" data-rule="${m}">${m}</span>`;
+        return m;
+    });
+
+    // 5. Convert Definitions & References safely
+    const definedIds = new Set();
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+        lines[i] = lines[i].replace(/^[ \t]*<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>([ \t]*(?:=|\/=|::=|:))/,
+            (fullMatch, ruleName, eqPart) => {
+                let idAttr = "";
+                if (!definedIds.has(ruleName)) {
+                    idAttr = `id="${ruleName}"`;
+                    definedIds.add(ruleName);
+                }
+                return `<span ${idAttr} class="rule-wrapper"><span onclick="history.back()" class="inline-back-btn" title="Go back">←</span><span class="definition">${ruleName}</span></span>${eqPart}`;
+            }
+        );
+    }
+    text = lines.join('\n');
+    text = text.replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g, '<a href="#$1" class="reference">$1</a>');
+
+    // 6. Identify and wrap Data Values (Hex, Decimal, Binary) like %x41-5A, %d13, %b1010
+    text = text.replace(/%[bBdDxX][0-9a-fA-F]+(?:-[0-9a-fA-F]+|(?:\.[0-9a-fA-F]+)*)?/g, (match) => {
+        return `<span class="value">${match}</span>`;
+    });
+
+    // 7. Identify and wrap comments
+    // Fix: Require ABNF ';' to be at start of line or preceded by space to ignore normal English punctuation!
+    text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (match, leadingSpace, abnfComment, cComment, pascalComment) => {
+        if (abnfComment) {
+            return `${leadingSpace}<span class="comment">${abnfComment}</span>`;
+        }
+        return `<span class="comment">${match}</span>`;
+    });
+
+    // 8. Restore string literals
+    text = text.replace(/__LITERAL_(\d+)__/g, (match, index) => {
+        return `<span class="literal">${literals[index]}</span>`;
+    });
+
+    document.getElementById('output').innerHTML = text;
+}
+</script>
+</body>
+</html>
