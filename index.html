@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ABNF Rule Walker</title>
+<title>Syntax Explorer</title>
 <style>
     body { font-family: sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; background: #fafafa; color: #24292f; }
     #container { display: flex; gap: 15px; flex-direction: column; }
@@ -24,11 +24,12 @@
     input[type="text"] { flex: 1; padding: 10px; font-size: 14px; border: 1px solid #d0d7de; border-radius: 4px; }
 
     textarea {
-        width: 100%; height: 200px; font-family: monospace; font-size: 14px;
+        width: 100%; height: 120px; font-family: monospace; font-size: 14px;
         padding: 15px; box-sizing: border-box; border: 1px solid #d0d7de; border-radius: 6px;
         margin-bottom: 10px;
     }
 
+    .btn-group { display: flex; gap: 10px; }
     button {
         padding: 10px 18px; font-size: 14px; cursor: pointer; background: #0969da;
         color: white; border: none; border-radius: 4px; font-weight: bold;
@@ -39,39 +40,119 @@
 
     .presets { display: flex; gap: 10px; align-items: center; font-size: 14px; color: #57606a; flex-wrap: wrap; }
 
+    /* Container for the parsed output */
     #output-container {
-        background: white; padding: 20px; border: 1px solid #d0d7de;
-        border-radius: 6px; min-height: 400px; overflow-x: auto;
+        background: white; border: 1px solid #d0d7de;
+        border-radius: 6px; 
+        min-height: 400px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
-    pre { font-family: monospace; font-size: 14.5px; white-space: pre-wrap; line-height: 1.6; margin: 0; }
+    
+    /* The Sticky Tab Wrapper - Flipped 180 degrees to force scrollbar to the top */
+    .tab-bar-wrapper {
+        position: sticky; 
+        top: 0; 
+        z-index: 100;
+        background: #eaedf0;
+        
+        border-top: 1px solid #d0d7de; 
+        border-radius: 0 0 6px 6px; 
+        
+        transform: rotateX(180deg);
+        overflow-x: auto;
+        overflow-y: hidden; 
+        
+        scrollbar-width: thin;
+        scrollbar-color: rgba(140, 149, 159, 0.4) transparent;
+    }
+    
+    /* Webkit Ultra-thin Scrollbar UI */
+    .tab-bar-wrapper::-webkit-scrollbar { height: 2px; }
+    .tab-bar-wrapper::-webkit-scrollbar-track { background: transparent; margin: 0 8px; }
+    .tab-bar-wrapper::-webkit-scrollbar-thumb { background-color: rgba(140, 149, 159, 0.4); border-radius: 2px; }
+    .tab-bar-wrapper:hover::-webkit-scrollbar-thumb { background-color: rgba(140, 149, 159, 0.8); }
+
+    /* The actual tab container - Flipped back to upright */
+    .tab-bar {
+        transform: rotateX(180deg);
+        display: flex;
+        align-items: flex-end; 
+        padding: 8px 8px 0 8px; 
+        gap: 4px;
+        width: max-content;
+        min-width: 100%;
+        box-sizing: border-box; 
+    }
+    
+    .tab {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 14px; background: #f6f8fa;
+        border: 1px solid #d0d7de; border-bottom: none;
+        border-radius: 6px 6px 0 0; cursor: pointer;
+        font-size: 13px; color: #57606a; font-family: sans-serif;
+        white-space: nowrap; transition: all 0.2s;
+        user-select: none;
+    }
+    .tab:hover { background: white; color: #24292f; }
+    .tab.active {
+        background: white; color: #0969da; font-weight: bold;
+        border-top: 3px solid #0969da;
+        padding-bottom: 7px; margin-bottom: -1px; 
+        z-index: 2;
+    }
+    .tab-close {
+        color: #8c959f; font-weight: bold; font-size: 12px;
+        border-radius: 50%; width: 16px; height: 16px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .tab-close:hover { background: #ffebe9; color: #cf222e; }
+
+    /* Clear All Button Styling */
+    .clear-all-btn {
+        display: flex; align-items: center;
+        padding: 4px 10px;
+        color: #8c959f; font-size: 12px;
+        font-family: sans-serif; cursor: pointer;
+        transition: all 0.2s; border-radius: 4px;
+        margin-left: auto; 
+        margin-bottom: 4px;
+        white-space: nowrap;
+        user-select: none;
+    }
+    .clear-all-btn:hover { background: #ffebe9; color: #cf222e; }
+
+    .output-scroll-area {
+        padding: 20px; 
+    }
+
+    pre { 
+        font-family: monospace; font-size: 14.5px; white-space: pre-wrap; 
+        word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.6; margin: 0; 
+    }
 
     /* Syntax Highlighting */
     .definition {
         font-weight: bold; color: #cf222e;
         background-color: #ffebe9; padding: 2px 4px; border-radius: 4px;
     }
-    .reference { color: #0969da; text-decoration: none; border-bottom: 1px dotted #0969da; }
+    .reference { color: #0969da; text-decoration: none; border-bottom: 1px dotted #0969da; cursor: pointer; }
     .reference:hover { background-color: #ddf4ff; text-decoration: none; }
     .literal { color: #0a3069; font-weight: 500; }
-    .value { color: #d97706; font-weight: bold; } /* Hex/Bin/Dec Values */
+    .value { color: #d97706; font-weight: bold; }
 
-    /* Comments Styling */
     .comment { color: #6e7781; font-style: italic; }
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
 
-    /* Target & Inline Back Button Styling */
-    .rule-wrapper { scroll-margin-top: 60px; }
-
-    .inline-back-btn {
-        display: none;
-        cursor: pointer; background: #eaedf0; color: #57606a; border: 1px solid #d0d7de;
-        border-radius: 4px; padding: 1px 6px; margin-right: 8px; font-size: 12px;
-        font-family: sans-serif; user-select: none; vertical-align: middle; text-decoration: none;
+    /* Target Styling */
+    .rule-wrapper { 
+        position: relative; 
+        scroll-margin-top: 60px; 
+        display: inline-block; 
+        margin-top: 1.0em; 
     }
-    .inline-back-btn:hover { background: #d0d7de; color: #24292f; }
 
-    .rule-wrapper:target .inline-back-btn { display: inline-block; }
     .rule-wrapper:target .definition {
         animation: highlight-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         display: inline-block;
@@ -82,12 +163,40 @@
         30%  { transform: scale(1.15); background-color: #fff8c5; box-shadow: 0 0 12px #fff8c5; z-index: 10; position: relative; border-radius: 6px; }
         100% { transform: scale(1); background-color: #ffebe9; }
     }
+
+    /* Floating Discreet Export Button */
+    .export-floating-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: white;
+        color: #57606a;
+        border: 1px solid #d0d7de;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 30px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.2s;
+        z-index: 1000;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.6;
+    }
+    .export-floating-btn:hover {
+        opacity: 1;
+        color: #24292f;
+        border-color: #8c959f;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        background: #f6f8fa;
+    }
 </style>
 </head>
 <body>
 
 <div class="header-container">
-    <h2>ABNF Rule Walker</h2>
+    <h2>Syntax Explorer</h2>
     <a href="https://github.com/xsnpdngv/SIP-ABNF" target="_blank" class="github-link" title="View repository on GitHub">
         <svg height="20" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
         GitHub
@@ -95,8 +204,7 @@
 </div>
 
 <div id="container">
-
-    <div class="panel">
+    <div class="panel" id="input-panel">
         <div class="input-group">
             <input type="text" id="url-input" placeholder="Enter URL for textual ABNF of EBNF definition..." />
             <button id="fetch-btn" onclick="fetchSyntax()">Fetch & Generate</button>
@@ -111,27 +219,36 @@
 
     <div class="panel">
         <textarea id="syntax-input" placeholder="...or paste raw ABNF/EBNF text directly here"></textarea>
-        <button onclick="convertSyntax()">Generate</button>
+        <div class="btn-group">
+            <button onclick="convertSyntax()">Generate</button>
+        </div>
     </div>
 
     <div id="output-container">
-        <pre id="output"><em>Rule walker will appear here...</em></pre>
+        <div id="tab-bar-wrapper" class="tab-bar-wrapper" style="display: none;">
+            <div id="tab-bar" class="tab-bar"></div>
+        </div>
+        
+        <div class="output-scroll-area" id="scroll-area">
+            <pre id="output"><em>Syntax Explorer will appear here...</em></pre>
+        </div>
     </div>
 </div>
 
+<button id="export-btn" class="export-floating-btn" onclick="exportHTML()" style="display: none;" title="Export HTML">
+    <svg height="14" viewBox="0 0 16 16" width="14" fill="currentColor">
+        <path fill-rule="evenodd" d="M7.47 10.78a.75.75 0 001.06 0l3.75-3.75a.75.75 0 00-1.06-1.06L8.75 8.44V1.75a.75.75 0 00-1.5 0v6.69L4.78 5.97a.75.75 0 00-1.06 1.06l3.75 3.75zM3.75 13a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5z"></path>
+    </svg>
+    Export HTML
+</button>
+
 <script>
-// Dynamically fetched core rules
 let coreRulesText = "";
 
-// Fetch core rules immediately on page load
 async function loadCoreRules() {
     try {
         const response = await fetch('https://raw.githubusercontent.com/xsnpdngv/SIP-ABNF/refs/heads/main/abnf-core.abnf');
-        if (response.ok) {
-            coreRulesText = await response.text();
-        } else {
-            console.warn("Could not load core rules. Status:", response.status);
-        }
+        if (response.ok) coreRulesText = await response.text();
     } catch (err) {
         console.error("Failed to load core rules:", err);
     }
@@ -149,12 +266,9 @@ async function fetchSyntax() {
     try {
         let response;
         try {
-            // Step 1: Attempt direct fetch
             response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         } catch (e) {
-            // Step 2: If direct fetch fails (usually CORS), try the proxy
-            console.log("Direct fetch blocked or failed. Routing through CORS proxy...");
             const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
             response = await fetch(proxyUrl);
             if (!response.ok) throw new Error(`Proxy Error: ${response.status}`);
@@ -176,28 +290,138 @@ function loadPreset(url) {
     fetchSyntax();
 }
 
+// ------------------------------------------------------------
+// WORKSPACE TABS LOGIC
+// ------------------------------------------------------------
+let openTabs = [];
+let activeTab = null;
+
+function handleLinkClick(event, linkElement) {
+    event.preventDefault(); 
+    const targetName = linkElement.getAttribute('href').substring(1);
+
+    if (!openTabs.includes(targetName)) {
+        openTabs.push(targetName);
+    }
+    
+    activateTabAndJump(targetName);
+}
+
+function activateTabAndJump(tabName, isFromHistory = false) {
+    activeTab = tabName;
+    renderTabs();
+    
+    const targetElement = document.getElementById(tabName);
+    if (targetElement) {
+        targetElement.scrollIntoView();
+        const def = targetElement.querySelector('.definition');
+        if (def) {
+            def.style.animation = 'none';
+            void def.offsetWidth; 
+            def.style.animation = ''; 
+        }
+    }
+    
+    if (!isFromHistory) {
+        location.hash = tabName;
+    }
+}
+
+function closeTab(event, tabName) {
+    event.stopPropagation(); 
+    
+    const index = openTabs.indexOf(tabName);
+    openTabs = openTabs.filter(t => t !== tabName);
+    
+    if (activeTab === tabName) {
+        if (openTabs.length > 0) {
+            const newActive = openTabs[Math.max(0, index - 1)];
+            activateTabAndJump(newActive);
+        } else {
+            activeTab = null;
+        }
+    }
+    renderTabs();
+}
+
+function closeAllTabs() {
+    openTabs = [];
+    activeTab = null;
+    renderTabs();
+    history.replaceState(null, null, window.location.pathname + window.location.search);
+}
+
+function renderTabs() {
+    const tabBarWrapper = document.getElementById('tab-bar-wrapper');
+    const tabBar = document.getElementById('tab-bar');
+    
+    if (openTabs.length === 0) {
+        tabBarWrapper.style.display = 'none';
+        return;
+    }
+    
+    tabBarWrapper.style.display = 'block';
+    tabBar.innerHTML = '';
+    
+    openTabs.forEach(tabName => {
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab' + (tabName === activeTab ? ' active' : '');
+        tabEl.onclick = () => activateTabAndJump(tabName);
+        
+        const titleSpan = document.createElement('span');
+        titleSpan.innerText = tabName;
+        tabEl.appendChild(titleSpan);
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'tab-close';
+        closeBtn.innerHTML = '×';
+        closeBtn.title = "Close Tab";
+        closeBtn.onclick = (e) => closeTab(e, tabName);
+        tabEl.appendChild(closeBtn);
+        
+        tabBar.appendChild(tabEl);
+        
+        if (tabName === activeTab) {
+            tabEl.scrollIntoView({ inline: 'nearest' });
+        }
+    });
+
+    const clearAllBtn = document.createElement('div');
+    clearAllBtn.className = 'clear-all-btn';
+    clearAllBtn.innerHTML = 'clear';
+    clearAllBtn.title = 'Close all open tabs';
+    clearAllBtn.onclick = closeAllTabs;
+    tabBar.appendChild(clearAllBtn);
+}
+
+window.addEventListener('hashchange', () => {
+    const currentHash = location.hash.substring(1);
+    if (currentHash && openTabs.includes(currentHash) && activeTab !== currentHash) {
+        activateTabAndJump(currentHash, true);
+    }
+});
+// ------------------------------------------------------------
+
 function convertSyntax() {
     let rawText = document.getElementById('syntax-input').value;
     if (!rawText.trim()) {
         document.getElementById('output').innerHTML = "<em>Please enter or fetch syntax first.</em>";
         return;
     }
+    
+    openTabs = [];
+    activeTab = null;
+    renderTabs();
 
-    // Append fetched core rules dynamically
     let text = rawText + "\n\n" + coreRulesText;
-
-    // 1. Escape HTML safely
     text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    // 2. Protect string literals
-    // Stop at newlines, and negative lookbehind prevents catching English apostrophes like "Don't"
     let literals = [];
     text = text.replace(/(?<![a-zA-Z])(["'])(?:(?!\1|\n|\r).)*?\1/g, (match) => {
         literals.push(match);
         return `__LITERAL_${literals.length - 1}__`;
     });
 
-    // 3. Find rule definitions
     const rules = new Set();
     const defRegex = /^[ \t]*([a-zA-Z][a-zA-Z0-9_-]*)[ \t]*(?:=|\/=|::=|:)/gm;
     let match;
@@ -205,16 +429,20 @@ function convertSyntax() {
         rules.add(match[1]);
     }
 
-    // 4. Mark references temporarily
-    const identRegex = /(?<![a-zA-Z0-9_-])([a-zA-Z][a-zA-Z0-9_-]*)(?![a-zA-Z0-9_-])/g;
-    text = text.replace(identRegex, (m) => {
-        if (rules.has(m)) return `<span class="temp-token" data-rule="${m}">${m}</span>`;
-        return m;
+    const identRegex = /(?<![a-zA-Z0-9_-])([0-9]*\*[0-9]*|[0-9]+)?([a-zA-Z][a-zA-Z0-9_-]*)(?![a-zA-Z0-9_-])/g;
+    text = text.replace(identRegex, (m, repetition, ruleName) => {
+        let result = repetition || "";
+        if (rules.has(ruleName)) {
+            result += `<span class="temp-token" data-rule="${ruleName}">${ruleName}</span>`;
+        } else {
+            result += ruleName;
+        }
+        return result;
     });
 
-    // 5. Convert Definitions & References safely
     const definedIds = new Set();
     const lines = text.split('\n');
+
     for (let i = 0; i < lines.length; i++) {
         lines[i] = lines[i].replace(/^[ \t]*<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>([ \t]*(?:=|\/=|::=|:))/,
             (fullMatch, ruleName, eqPart) => {
@@ -223,19 +451,23 @@ function convertSyntax() {
                     idAttr = `id="${ruleName}"`;
                     definedIds.add(ruleName);
                 }
-                return `<span ${idAttr} class="rule-wrapper"><span onclick="history.back()" class="inline-back-btn" title="Go back">←</span><span class="definition">${ruleName}</span></span>${eqPart}`;
+                return `<span ${idAttr} class="rule-wrapper"><span class="definition">${ruleName}</span></span>${eqPart}`;
+            }
+        );
+
+        lines[i] = lines[i].replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g, 
+            (fullMatch, ruleRef) => {
+                return `<a href="#${ruleRef}" class="reference" onclick="handleLinkClick(event, this)">${ruleRef}</a>`;
             }
         );
     }
+    
     text = lines.join('\n');
-    text = text.replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g, '<a href="#$1" class="reference">$1</a>');
 
-    // 6. Identify and wrap Data Values (Hex, Decimal, Binary) like %x41-5A, %d13, %b1010
     text = text.replace(/%[bBdDxX][0-9a-fA-F]+(?:-[0-9a-fA-F]+|(?:\.[0-9a-fA-F]+)*)?/g, (match) => {
         return `<span class="value">${match}</span>`;
     });
 
-    // 7. Identify and wrap comments
     text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (match, leadingSpace, abnfComment, cComment, pascalComment) => {
         if (abnfComment) {
             return `${leadingSpace}<span class="comment">${abnfComment}</span>`;
@@ -243,12 +475,185 @@ function convertSyntax() {
         return `<span class="comment">${match}</span>`;
     });
 
-    // 8. Restore string literals
     text = text.replace(/__LITERAL_(\d+)__/g, (match, index) => {
         return `<span class="literal">${literals[index]}</span>`;
     });
 
     document.getElementById('output').innerHTML = text;
+
+    document.getElementById('export-btn').style.display = 'flex';
+    document.getElementById('output-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function exportHTML() {
+    const outputHtml = document.getElementById('output').innerHTML;
+    if (outputHtml.includes("<em>Syntax Explorer will appear here")) {
+        alert("Please generate a syntax tree first before exporting.");
+        return;
+    }
+
+    const standaloneHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Syntax Export</title>
+<style>
+    body { font-family: sans-serif; padding: 40px; max-width: 1200px; margin: 0 auto; background: #fafafa; color: #24292f; }
+    
+    #output-container { background: white; border: 1px solid #d0d7de; border-radius: 6px; min-height: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    .tab-bar-wrapper { position: sticky; top: 0; z-index: 100; background: #eaedf0; border-top: 1px solid #d0d7de; border-radius: 0 0 6px 6px; transform: rotateX(180deg); overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: rgba(140, 149, 159, 0.4) transparent; }
+    .tab-bar-wrapper::-webkit-scrollbar { height: 2px; }
+    .tab-bar-wrapper::-webkit-scrollbar-track { background: transparent; margin: 0 8px; }
+    .tab-bar-wrapper::-webkit-scrollbar-thumb { background-color: rgba(140, 149, 159, 0.4); border-radius: 2px; }
+    .tab-bar-wrapper:hover::-webkit-scrollbar-thumb { background-color: rgba(140, 149, 159, 0.8); }
+    
+    .tab-bar { transform: rotateX(180deg); display: flex; align-items: flex-end; padding: 8px 8px 0 8px; gap: 4px; width: max-content; min-width: 100%; box-sizing: border-box; }
+    .tab { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: #f6f8fa; border: 1px solid #d0d7de; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 13px; color: #57606a; font-family: sans-serif; white-space: nowrap; transition: all 0.2s; user-select: none; }
+    .tab:hover { background: white; color: #24292f; }
+    .tab.active { background: white; color: #0969da; font-weight: bold; border-top: 3px solid #0969da; padding-bottom: 7px; margin-bottom: -1px; z-index: 2; }
+    .tab-close { color: #8c959f; font-weight: bold; font-size: 12px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .tab-close:hover { background: #ffebe9; color: #cf222e; }
+
+    .clear-all-btn { display: flex; align-items: center; padding: 4px 10px; color: #8c959f; font-size: 12px; font-family: sans-serif; cursor: pointer; transition: all 0.2s; border-radius: 4px; margin-left: auto; margin-bottom: 4px; white-space: nowrap; user-select: none; }
+    .clear-all-btn:hover { background: #ffebe9; color: #cf222e; }
+
+    .output-scroll-area { padding: 20px; }
+
+    pre { font-family: monospace; font-size: 14.5px; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.6; margin: 0; }
+    .definition { font-weight: bold; color: #cf222e; background-color: #ffebe9; padding: 2px 4px; border-radius: 4px; }
+    .reference { color: #0969da; text-decoration: none; border-bottom: 1px dotted #0969da; cursor: pointer; }
+    .reference:hover { background-color: #ddf4ff; text-decoration: none; }
+    .literal { color: #0a3069; font-weight: 500; }
+    .value { color: #d97706; font-weight: bold; }
+    .comment { color: #6e7781; font-style: italic; }
+    .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
+    .comment .reference:hover { background-color: #f6f8fa; }
+    
+    .rule-wrapper { position: relative; scroll-margin-top: 60px; display: inline-block; margin-top: 1.0em; }
+    .rule-wrapper:target .definition { animation: highlight-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
+    
+    @keyframes highlight-bounce {
+        0%   { transform: scale(1); background-color: #ffebe9; }
+        30%  { transform: scale(1.15); background-color: #fff8c5; box-shadow: 0 0 12px #fff8c5; z-index: 10; position: relative; border-radius: 6px; }
+        100% { transform: scale(1); background-color: #ffebe9; }
+    }
+</style>
+</head>
+<body>
+
+<div id="output-container">
+    <div id="tab-bar-wrapper" class="tab-bar-wrapper" style="display: none;">
+        <div id="tab-bar" class="tab-bar"></div>
+    </div>
+    <div class="output-scroll-area">
+        <pre>${outputHtml}</pre>
+    </div>
+</div>
+
+<script>
+let openTabs = [];
+let activeTab = null;
+
+function handleLinkClick(event, linkElement) {
+    event.preventDefault(); 
+    const targetName = linkElement.getAttribute('href').substring(1);
+    if (!openTabs.includes(targetName)) { openTabs.push(targetName); }
+    activateTabAndJump(targetName);
+}
+
+function activateTabAndJump(tabName, isFromHistory = false) {
+    activeTab = tabName;
+    renderTabs();
+    
+    const targetElement = document.getElementById(tabName);
+    if (targetElement) {
+        targetElement.scrollIntoView();
+        const def = targetElement.querySelector('.definition');
+        if (def) {
+            def.style.animation = 'none';
+            void def.offsetWidth; 
+            def.style.animation = ''; 
+        }
+    }
+    
+    if (!isFromHistory) {
+        location.hash = tabName;
+    }
+}
+
+function closeTab(event, tabName) {
+    event.stopPropagation();
+    const index = openTabs.indexOf(tabName);
+    openTabs = openTabs.filter(t => t !== tabName);
+    
+    if (activeTab === tabName) {
+        if (openTabs.length > 0) {
+            activateTabAndJump(openTabs[Math.max(0, index - 1)]);
+        } else { activeTab = null; }
+    }
+    renderTabs();
+}
+
+function closeAllTabs() {
+    openTabs = [];
+    activeTab = null;
+    renderTabs();
+    history.replaceState(null, null, window.location.pathname + window.location.search);
+}
+
+function renderTabs() {
+    const tabBarWrapper = document.getElementById('tab-bar-wrapper');
+    const tabBar = document.getElementById('tab-bar');
+    if (openTabs.length === 0) { tabBarWrapper.style.display = 'none'; return; }
+    
+    tabBarWrapper.style.display = 'block';
+    tabBar.innerHTML = '';
+    
+    openTabs.forEach(tabName => {
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab' + (tabName === activeTab ? ' active' : '');
+        tabEl.onclick = () => activateTabAndJump(tabName);
+        
+        const titleSpan = document.createElement('span');
+        titleSpan.innerText = tabName;
+        tabEl.appendChild(titleSpan);
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'tab-close';
+        closeBtn.innerHTML = '×';
+        closeBtn.onclick = (e) => closeTab(e, tabName);
+        tabEl.appendChild(closeBtn);
+        
+        tabBar.appendChild(tabEl);
+        if (tabName === activeTab) { tabEl.scrollIntoView({ inline: 'nearest' }); }
+    });
+
+    const clearAllBtn = document.createElement('div');
+    clearAllBtn.className = 'clear-all-btn';
+    clearAllBtn.innerHTML = 'clear';
+    clearAllBtn.title = 'Close all open tabs';
+    clearAllBtn.onclick = closeAllTabs;
+    tabBar.appendChild(clearAllBtn);
+}
+
+window.addEventListener('hashchange', () => {
+    const currentHash = location.hash.substring(1);
+    if (currentHash && openTabs.includes(currentHash) && activeTab !== currentHash) {
+        activateTabAndJump(currentHash, true);
+    }
+});
+<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([standaloneHtml], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'syntex-export.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 </script>
 </body>
