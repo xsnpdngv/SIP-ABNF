@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Syntax Explorer</title>
+<title>Syntax Dive</title>
 <style>
     body { font-family: sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; background: #fafafa; color: #24292f; }
     #container { display: flex; gap: 15px; flex-direction: column; }
@@ -42,6 +42,7 @@
 
     /* Container for the parsed output */
     #output-container {
+        display: none; /* Hidden until content is generated */
         background: white; border: 1px solid #d0d7de;
         border-radius: 6px; 
         min-height: 400px;
@@ -145,9 +146,9 @@
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
     
-    /* RFC External Link Styling */
-    .comment .rfc-link { color: #a17ce6de; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
-    .comment .rfc-link:hover { background-color: #f3f0ff; text-decoration: none; }
+    /* Specification External Link Styling */
+    .comment .spec-link { color: #a17ce6de; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
+    .comment .spec-link:hover { background-color: #f3f0ff; text-decoration: none; }
 
     /* Target Styling */
     .rule-wrapper { 
@@ -200,7 +201,7 @@
 <body>
 
 <div class="header-container">
-    <h2>Syntax Explorer</h2>
+    <h2>Syntax Dive</h2>
     <a href="https://github.com/xsnpdngv/SIP-ABNF" target="_blank" class="github-link" title="View repository on GitHub">
         <svg height="20" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
         GitHub
@@ -234,7 +235,7 @@
         </div>
         
         <div class="output-scroll-area" id="scroll-area">
-            <pre id="output"><em>Syntax Explorer will appear here...</em></pre>
+            <pre id="output"></pre>
         </div>
     </div>
 </div>
@@ -409,6 +410,7 @@ window.addEventListener('hashchange', () => {
 function convertSyntax() {
     let rawText = document.getElementById('syntax-input').value;
     if (!rawText.trim()) {
+        document.getElementById('output-container').style.display = 'block';
         document.getElementById('output').innerHTML = "<em>Please enter or fetch syntax first.</em>";
         return;
     }
@@ -472,16 +474,33 @@ function convertSyntax() {
         return `<span class="value">${match}</span>`;
     });
 
-    // Safely parse RFC links only inside comments
+    // Safely parse specification links only inside comments
     text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (match, leadingSpace, abnfComment, cComment, pascalComment) => {
-        const processRFC = (str) => {
-            return str.replace(/RFC\s*(\d+)/gi, '<a href="https://datatracker.ietf.org/doc/html/rfc$1" target="_blank" class="rfc-link">$&</a>');
+        const processSpecs = (str) => {
+            // Match RFCs
+            let processed = str.replace(/RFC\s*(\d+)(?:\s*(?:[-:/]\s*(?:(?:Section|Chapter)\s+)?|(?:Section|Chapter)\s+)(\d+(?:\.\d+)*))?/gi, (rfcMatch, rfcNum, sectionNum) => {
+                let url = `https://datatracker.ietf.org/doc/html/rfc${rfcNum}`;
+                if (sectionNum) {
+                    url += `#section-${sectionNum}`;
+                }
+                return `<a href="${url}" target="_blank" class="spec-link">${rfcMatch}</a>`;
+            });
+            
+            // Match 3GPP Specs and route them to ETSI PDFs, keeping section plain text
+            processed = processed.replace(/(3GPP\s+TS\s+(\d{1,2})\.(\d{3}))(\s*(?:[-:/]\s*)?(?:see\s+)?(?:Section|Chapter|Clause)\s+[0-9a-z.]+)?/gi, (fullMatch, baseSpec, series, num, suffix) => {
+                let etsiSeries = parseInt(series, 10) + 100;
+                let url = `https://www.etsi.org/standards-search#page=1&search=ETSI%20TS%20${etsiSeries}%20${num}&title=0&etsiNumber=1&content=0`;
+                let linkHtml = `<a href="${url}" target="_blank" class="spec-link" title="Search on ETSI Portal (ETSI TS ${etsiSeries} ${num})">${baseSpec}</a>`;
+                return suffix ? linkHtml + suffix : linkHtml;
+            });
+            
+            return processed;
         };
 
         if (abnfComment) {
-            return `${leadingSpace}<span class="comment">${processRFC(abnfComment)}</span>`;
+            return `${leadingSpace}<span class="comment">${processSpecs(abnfComment)}</span>`;
         }
-        return `<span class="comment">${processRFC(match)}</span>`;
+        return `<span class="comment">${processSpecs(match)}</span>`;
     });
 
     text = text.replace(/__LITERAL_(\d+)__/g, (match, index) => {
@@ -490,13 +509,14 @@ function convertSyntax() {
 
     document.getElementById('output').innerHTML = text;
 
+    document.getElementById('output-container').style.display = 'block';
     document.getElementById('export-btn').style.display = 'flex';
     document.getElementById('output-container').scrollIntoView({ behavior: 'smooth' });
 }
 
 function exportHTML() {
     const outputHtml = document.getElementById('output').innerHTML;
-    if (outputHtml.includes("<em>Syntax Explorer will appear here")) {
+    if (outputHtml.includes("<em>Please enter or fetch syntax first.")) {
         alert("Please generate a syntax tree first before exporting.");
         return;
     }
@@ -505,7 +525,7 @@ function exportHTML() {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Syntax Export</title>
+<title>Syntax Dive</title>
 <style>
     body { font-family: sans-serif; padding: 40px; max-width: 1200px; margin: 0 auto; background: #fafafa; color: #24292f; }
     
@@ -539,8 +559,8 @@ function exportHTML() {
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
     
-    .comment .rfc-link { color: #8250df; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
-    .comment .rfc-link:hover { background-color: #f3f0ff; text-decoration: none; }
+    .comment .spec-link { color: #a17ce6de; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
+    .comment .spec-link:hover { background-color: #f3f0ff; text-decoration: none; }
     
     .rule-wrapper { position: relative; scroll-margin-top: 60px; display: inline-block; margin-top: 1.0em; }
     .rule-wrapper:target .definition { animation: highlight-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
@@ -662,7 +682,7 @@ window.addEventListener('hashchange', () => {
     const blob = new Blob([standaloneHtml], { type: 'text/html' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'syntex-export.html';
+    link.download = 'abnf.html';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
