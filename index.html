@@ -555,11 +555,14 @@ function convertSyntax() {
     // Safely parse specification links only inside comments
     text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (commentMatch, leadingSpace, abnfComment, cComment, pascalComment) => {
         const processSpecs = (str) => {
-            // Match RFCs
-            let processed = str.replace(/RFC\s*(\d+)(?:\s*(?:[-:/]\s*(?:(?:Section|Chapter)\s+)?|(?:Section|Chapter)\s+)(\d+(?:\.\d+)*))?/gi, (rfcMatch, rfcNum, sectionNum) => {
+            // Match RFCs with intelligent branching for Section, Chapter, Appendix, or pure numeric shorthand
+            let processed = str.replace(/RFC\s*(\d+)(?:\s*(?:(?:[-:/]\s*)?(?:see\s+)?(Section|Chapter|Appendix)\s+([a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)|(?:[-:/]\s*(?:see\s+)?)([0-9]+(?:\.[0-9]+)*)))?/gi, (rfcMatch, rfcNum, keyword, idWithKeyword, idWithoutKeyword) => {
                 let url = `https://datatracker.ietf.org/doc/html/rfc${rfcNum}`;
-                if (sectionNum) {
-                    url += `#section-${sectionNum}`;
+                let id = idWithKeyword || idWithoutKeyword;
+                if (id) {
+                    let kw = (keyword || 'section').toLowerCase();
+                    if (kw === 'chapter') kw = 'section';
+                    url += `#${kw}-${id}`;
                 }
                 return `<a href="${url}" target="_blank" class="spec-link">${rfcMatch}</a>`;
             });
