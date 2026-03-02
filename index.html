@@ -144,6 +144,10 @@
     .comment { color: #6e7781; font-style: italic; }
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
+    
+    /* RFC External Link Styling */
+    .comment .rfc-link { color: #a17ce6de; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
+    .comment .rfc-link:hover { background-color: #f3f0ff; text-decoration: none; }
 
     /* Target Styling */
     .rule-wrapper { 
@@ -468,11 +472,16 @@ function convertSyntax() {
         return `<span class="value">${match}</span>`;
     });
 
+    // Safely parse RFC links only inside comments
     text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (match, leadingSpace, abnfComment, cComment, pascalComment) => {
+        const processRFC = (str) => {
+            return str.replace(/RFC\s*(\d+)/gi, '<a href="https://datatracker.ietf.org/doc/html/rfc$1" target="_blank" class="rfc-link">$&</a>');
+        };
+
         if (abnfComment) {
-            return `${leadingSpace}<span class="comment">${abnfComment}</span>`;
+            return `${leadingSpace}<span class="comment">${processRFC(abnfComment)}</span>`;
         }
-        return `<span class="comment">${match}</span>`;
+        return `<span class="comment">${processRFC(match)}</span>`;
     });
 
     text = text.replace(/__LITERAL_(\d+)__/g, (match, index) => {
@@ -529,6 +538,9 @@ function exportHTML() {
     .comment { color: #6e7781; font-style: italic; }
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
+    
+    .comment .rfc-link { color: #8250df; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
+    .comment .rfc-link:hover { background-color: #f3f0ff; text-decoration: none; }
     
     .rule-wrapper { position: relative; scroll-margin-top: 60px; display: inline-block; margin-top: 1.0em; }
     .rule-wrapper:target .definition { animation: highlight-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
