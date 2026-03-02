@@ -11,9 +11,9 @@
     /* Header & GitHub Link Styling */
     .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     h2 { margin: 0; }
-    .github-link { 
-        display: flex; align-items: center; gap: 6px; 
-        color: #57606a; text-decoration: none; font-size: 14px; font-weight: 600; 
+    .github-link {
+        display: flex; align-items: center; gap: 6px;
+        color: #57606a; text-decoration: none; font-size: 14px; font-weight: 600;
         transition: color 0.2s ease;
     }
     .github-link:hover { color: #24292f; }
@@ -44,29 +44,26 @@
     #output-container {
         display: none; /* Hidden until content is generated */
         background: white; border: 1px solid #d0d7de;
-        border-radius: 6px; 
+        border-radius: 6px;
         min-height: 400px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
-    
+
     /* The Sticky Tab Wrapper - Flipped 180 degrees to force scrollbar to the top */
     .tab-bar-wrapper {
-        position: sticky; 
-        top: 0; 
+        position: sticky;
+        top: 0;
         z-index: 100;
         background: #eaedf0;
-        
-        border-top: 1px solid #d0d7de; 
-        border-radius: 0 0 6px 6px; 
-        
+        border-top: 1px solid #d0d7de;
+        border-radius: 0 0 6px 6px;
         transform: rotateX(180deg);
         overflow-x: auto;
-        overflow-y: hidden; 
-        
+        overflow-y: hidden;
         scrollbar-width: thin;
         scrollbar-color: rgba(140, 149, 159, 0.4) transparent;
     }
-    
+
     /* Webkit Ultra-thin Scrollbar UI */
     .tab-bar-wrapper::-webkit-scrollbar { height: 2px; }
     .tab-bar-wrapper::-webkit-scrollbar-track { background: transparent; margin: 0 8px; }
@@ -77,14 +74,14 @@
     .tab-bar {
         transform: rotateX(180deg);
         display: flex;
-        align-items: flex-end; 
-        padding: 8px 8px 0 8px; 
+        align-items: flex-end;
+        padding: 8px 8px 0 8px;
         gap: 4px;
         width: max-content;
         min-width: 100%;
-        box-sizing: border-box; 
+        box-sizing: border-box;
     }
-    
+
     .tab {
         display: flex; align-items: center; gap: 8px;
         padding: 6px 14px; background: #f6f8fa;
@@ -98,7 +95,7 @@
     .tab.active {
         background: white; color: #0969da; font-weight: bold;
         border-top: 3px solid #0969da;
-        padding-bottom: 7px; margin-bottom: -1px; 
+        padding-bottom: 7px; margin-bottom: -1px;
         z-index: 2;
     }
     .tab-close {
@@ -109,14 +106,13 @@
     }
     .tab-close:hover { background: #ffebe9; color: #cf222e; }
 
-    /* Clear All Button Styling */
     .clear-all-btn {
         display: flex; align-items: center;
         padding: 4px 10px;
         color: #8c959f; font-size: 12px;
         font-family: sans-serif; cursor: pointer;
         transition: all 0.2s; border-radius: 4px;
-        margin-left: auto; 
+        margin-left: auto;
         margin-bottom: 4px;
         white-space: nowrap;
         user-select: none;
@@ -124,12 +120,12 @@
     .clear-all-btn:hover { background: #ffebe9; color: #cf222e; }
 
     .output-scroll-area {
-        padding: 20px; 
+        padding: 20px;
     }
 
-    pre { 
-        font-family: monospace; font-size: 14.5px; white-space: pre-wrap; 
-        word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.6; margin: 0; 
+    pre {
+        font-family: monospace; font-size: 14.5px; white-space: pre-wrap;
+        word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.6; margin: 0;
     }
 
     /* Syntax Highlighting */
@@ -140,22 +136,61 @@
     .reference { color: #0969da; text-decoration: none; border-bottom: 1px dotted #0969da; cursor: pointer; }
     .reference:hover { background-color: #ddf4ff; text-decoration: none; }
     .literal { color: #0a3069; font-weight: 500; }
-    .value { color: #d97706; font-weight: bold; }
+
+    /* Value element styling for Custom Tooltips */
+    .value {
+        color: #d97706; font-weight: bold;
+        cursor: help; border-bottom: 1px dotted rgba(217, 119, 6, 0.4);
+        position: relative;
+    }
+
+    /* The Tooltip Box */
+    .value:hover::after {
+        content: attr(data-hint);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #24292f;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: monospace; /* Monospace for precise character reading */
+        font-weight: 500;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        pointer-events: none;
+    }
+
+    /* The Tooltip Down Arrow */
+    .value:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: #24292f;
+        margin-bottom: -4px;
+        z-index: 1000;
+        pointer-events: none;
+    }
 
     .comment { color: #6e7781; font-style: italic; }
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
-    
-    /* Specification External Link Styling */
+
     .comment .spec-link { color: #a17ce6de; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
     .comment .spec-link:hover { background-color: #f3f0ff; text-decoration: none; }
 
-    /* Target Styling */
-    .rule-wrapper { 
-        position: relative; 
-        scroll-margin-top: 60px; 
-        display: inline-block; 
-        margin-top: 1.0em; 
+    .rule-wrapper {
+        position: relative;
+        scroll-margin-top: 60px;
+        display: inline-block;
+        margin-top: 1.0em;
     }
 
     .rule-wrapper:target .definition {
@@ -233,7 +268,7 @@
         <div id="tab-bar-wrapper" class="tab-bar-wrapper" style="display: none;">
             <div id="tab-bar" class="tab-bar"></div>
         </div>
-        
+
         <div class="output-scroll-area" id="scroll-area">
             <pre id="output"></pre>
         </div>
@@ -249,6 +284,30 @@
 
 <script>
 let coreRulesText = "";
+
+const asciiMap = {
+    0: "NUL (Null)", 1: "SOH (Start of Heading)", 2: "STX (Start of Text)", 3: "ETX (End of Text)",
+    4: "EOT (End of Transmission)", 5: "ENQ (Enquiry)", 6: "ACK (Acknowledge)", 7: "BEL (Bell)",
+    8: "BS (Backspace)", 9: "HT (Horizontal Tab)", 10: "LF (Line Feed)", 11: "VT (Vertical Tab)",
+    12: "FF (Form Feed)", 13: "CR (Carriage Return)", 14: "SO (Shift Out)", 15: "SI (Shift In)",
+    16: "DLE (Data Link Escape)", 17: "DC1 (Device Control 1)", 18: "DC2 (Device Control 2)",
+    19: "DC3 (Device Control 3)", 20: "DC4 (Device Control 4)", 21: "NAK (Negative ACK)",
+    22: "SYN (Synchronous Idle)", 23: "ETB (End of Trans. Block)", 24: "CAN (Cancel)",
+    25: "EM (End of Medium)", 26: "SUB (Substitute)", 27: "ESC (Escape)", 28: "FS (File Separator)",
+    29: "GS (Group Separator)", 30: "RS (Record Separator)", 31: "US (Unit Separator)",
+    32: "Space", 127: "DEL (Delete)"
+};
+
+function getAsciiChar(code) {
+    if (asciiMap[code]) return asciiMap[code];
+    // ASCII printables (33-126) and Unicode printables (160+)
+    if ((code > 32 && code < 127) || code >= 160) {
+        // Use single quotes to securely embed inside our data-hint attribute
+        return `'${String.fromCharCode(code)}'`;
+    }
+    // Fallback for unprintable control characters
+    return `U+${code.toString(16).padStart(4, '0').toUpperCase()}`;
+}
 
 async function loadCoreRules() {
     try {
@@ -302,42 +361,42 @@ let openTabs = [];
 let activeTab = null;
 
 function handleLinkClick(event, linkElement) {
-    event.preventDefault(); 
+    event.preventDefault();
     const targetName = linkElement.getAttribute('href').substring(1);
 
     if (!openTabs.includes(targetName)) {
         openTabs.push(targetName);
     }
-    
+
     activateTabAndJump(targetName);
 }
 
 function activateTabAndJump(tabName, isFromHistory = false) {
     activeTab = tabName;
     renderTabs();
-    
+
     const targetElement = document.getElementById(tabName);
     if (targetElement) {
         targetElement.scrollIntoView();
         const def = targetElement.querySelector('.definition');
         if (def) {
             def.style.animation = 'none';
-            void def.offsetWidth; 
-            def.style.animation = ''; 
+            void def.offsetWidth;
+            def.style.animation = '';
         }
     }
-    
+
     if (!isFromHistory) {
         location.hash = tabName;
     }
 }
 
 function closeTab(event, tabName) {
-    event.stopPropagation(); 
-    
+    event.stopPropagation();
+
     const index = openTabs.indexOf(tabName);
     openTabs = openTabs.filter(t => t !== tabName);
-    
+
     if (activeTab === tabName) {
         if (openTabs.length > 0) {
             const newActive = openTabs[Math.max(0, index - 1)];
@@ -359,33 +418,33 @@ function closeAllTabs() {
 function renderTabs() {
     const tabBarWrapper = document.getElementById('tab-bar-wrapper');
     const tabBar = document.getElementById('tab-bar');
-    
+
     if (openTabs.length === 0) {
         tabBarWrapper.style.display = 'none';
         return;
     }
-    
+
     tabBarWrapper.style.display = 'block';
     tabBar.innerHTML = '';
-    
+
     openTabs.forEach(tabName => {
         const tabEl = document.createElement('div');
         tabEl.className = 'tab' + (tabName === activeTab ? ' active' : '');
         tabEl.onclick = () => activateTabAndJump(tabName);
-        
+
         const titleSpan = document.createElement('span');
         titleSpan.innerText = tabName;
         tabEl.appendChild(titleSpan);
-        
+
         const closeBtn = document.createElement('span');
         closeBtn.className = 'tab-close';
         closeBtn.innerHTML = '×';
         closeBtn.title = "Close Tab";
         closeBtn.onclick = (e) => closeTab(e, tabName);
         tabEl.appendChild(closeBtn);
-        
+
         tabBar.appendChild(tabEl);
-        
+
         if (tabName === activeTab) {
             tabEl.scrollIntoView({ inline: 'nearest' });
         }
@@ -414,7 +473,7 @@ function convertSyntax() {
         document.getElementById('output').innerHTML = "<em>Please enter or fetch syntax first.</em>";
         return;
     }
-    
+
     openTabs = [];
     activeTab = null;
     renderTabs();
@@ -461,21 +520,40 @@ function convertSyntax() {
             }
         );
 
-        lines[i] = lines[i].replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g, 
+        lines[i] = lines[i].replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g,
             (fullMatch, ruleRef) => {
                 return `<a href="#${ruleRef}" class="reference" onclick="handleLinkClick(event, this)">${ruleRef}</a>`;
             }
         );
     }
-    
+
     text = lines.join('\n');
 
-    text = text.replace(/%[bBdDxX][0-9a-fA-F]+(?:-[0-9a-fA-F]+|(?:\.[0-9a-fA-F]+)*)?/g, (match) => {
-        return `<span class="value">${match}</span>`;
+    text = text.replace(/%([bBdDxX])([0-9a-fA-F]+(?:-[0-9a-fA-F]+|(?:\.[0-9a-fA-F]+)*)?)/g, (fullMatch, baseChar, valStr) => {
+        let base = baseChar.toLowerCase() === 'x' ? 16 : (baseChar.toLowerCase() === 'd' ? 10 : 2);
+        let hint = "";
+
+        if (valStr.includes('-')) {
+            let parts = valStr.split('-');
+            let start = parseInt(parts[0], base);
+            let end = parseInt(parts[1], base);
+            hint = `${getAsciiChar(start)} - ${getAsciiChar(end)}`;
+        } else if (valStr.includes('.')) {
+            let parts = valStr.split('.');
+            hint = parts.map(p => getAsciiChar(parseInt(p, base))).join(' ');
+        } else {
+            hint = getAsciiChar(parseInt(valStr, base));
+        }
+
+        // Safely escape the hint so it can never break the HTML attribute layout
+        let safeHint = hint.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Using data-hint for our robust CSS-based tooltip
+        return `<span class="value" data-hint="${safeHint}">${fullMatch}</span>`;
     });
 
     // Safely parse specification links only inside comments
-    text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (match, leadingSpace, abnfComment, cComment, pascalComment) => {
+    text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (commentMatch, leadingSpace, abnfComment, cComment, pascalComment) => {
         const processSpecs = (str) => {
             // Match RFCs
             let processed = str.replace(/RFC\s*(\d+)(?:\s*(?:[-:/]\s*(?:(?:Section|Chapter)\s+)?|(?:Section|Chapter)\s+)(\d+(?:\.\d+)*))?/gi, (rfcMatch, rfcNum, sectionNum) => {
@@ -485,7 +563,7 @@ function convertSyntax() {
                 }
                 return `<a href="${url}" target="_blank" class="spec-link">${rfcMatch}</a>`;
             });
-            
+
             // Match 3GPP Specs and route them to ETSI PDFs, keeping section plain text
             processed = processed.replace(/(3GPP\s+TS\s+(\d{1,2})\.(\d{3}))(\s*(?:[-:/]\s*)?(?:see\s+)?(?:Section|Chapter|Clause)\s+[0-9a-z.]+)?/gi, (fullMatch, baseSpec, series, num, suffix) => {
                 let etsiSeries = parseInt(series, 10) + 100;
@@ -493,14 +571,14 @@ function convertSyntax() {
                 let linkHtml = `<a href="${url}" target="_blank" class="spec-link" title="Search on ETSI Portal (ETSI TS ${etsiSeries} ${num})">${baseSpec}</a>`;
                 return suffix ? linkHtml + suffix : linkHtml;
             });
-            
+
             return processed;
         };
 
         if (abnfComment) {
             return `${leadingSpace}<span class="comment">${processSpecs(abnfComment)}</span>`;
         }
-        return `<span class="comment">${processSpecs(match)}</span>`;
+        return `<span class="comment">${processSpecs(commentMatch)}</span>`;
     });
 
     text = text.replace(/__LITERAL_(\d+)__/g, (match, index) => {
@@ -528,15 +606,15 @@ function exportHTML() {
 <title>Syntax Dive</title>
 <style>
     body { font-family: sans-serif; padding: 40px; max-width: 1200px; margin: 0 auto; background: #fafafa; color: #24292f; }
-    
+
     #output-container { background: white; border: 1px solid #d0d7de; border-radius: 6px; min-height: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    
+
     .tab-bar-wrapper { position: sticky; top: 0; z-index: 100; background: #eaedf0; border-top: 1px solid #d0d7de; border-radius: 0 0 6px 6px; transform: rotateX(180deg); overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: rgba(140, 149, 159, 0.4) transparent; }
     .tab-bar-wrapper::-webkit-scrollbar { height: 2px; }
     .tab-bar-wrapper::-webkit-scrollbar-track { background: transparent; margin: 0 8px; }
     .tab-bar-wrapper::-webkit-scrollbar-thumb { background-color: rgba(140, 149, 159, 0.4); border-radius: 2px; }
     .tab-bar-wrapper:hover::-webkit-scrollbar-thumb { background-color: rgba(140, 149, 159, 0.8); }
-    
+
     .tab-bar { transform: rotateX(180deg); display: flex; align-items: flex-end; padding: 8px 8px 0 8px; gap: 4px; width: max-content; min-width: 100%; box-sizing: border-box; }
     .tab { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: #f6f8fa; border: 1px solid #d0d7de; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 13px; color: #57606a; font-family: sans-serif; white-space: nowrap; transition: all 0.2s; user-select: none; }
     .tab:hover { background: white; color: #24292f; }
@@ -554,17 +632,21 @@ function exportHTML() {
     .reference { color: #0969da; text-decoration: none; border-bottom: 1px dotted #0969da; cursor: pointer; }
     .reference:hover { background-color: #ddf4ff; text-decoration: none; }
     .literal { color: #0a3069; font-weight: 500; }
-    .value { color: #d97706; font-weight: bold; }
+
+    .value { color: #d97706; font-weight: bold; cursor: help; border-bottom: 1px dotted rgba(217, 119, 6, 0.4); position: relative; }
+    .value:hover::after { content: attr(data-hint); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: #24292f; color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-family: monospace; font-weight: 500; white-space: nowrap; z-index: 1000; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: none; }
+    .value:hover::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #24292f; margin-bottom: -4px; z-index: 1000; pointer-events: none; }
+
     .comment { color: #6e7781; font-style: italic; }
     .comment .reference { color: #548eaa; border-bottom-color: #548eaa; }
     .comment .reference:hover { background-color: #f6f8fa; }
-    
+
     .comment .spec-link { color: #a17ce6de; text-decoration: underline; font-weight: 500; cursor: pointer; text-underline-offset: 2px; }
     .comment .spec-link:hover { background-color: #f3f0ff; text-decoration: none; }
-    
+
     .rule-wrapper { position: relative; scroll-margin-top: 60px; display: inline-block; margin-top: 1.0em; }
     .rule-wrapper:target .definition { animation: highlight-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
-    
+
     @keyframes highlight-bounce {
         0%   { transform: scale(1); background-color: #ffebe9; }
         30%  { transform: scale(1.15); background-color: #fff8c5; box-shadow: 0 0 12px #fff8c5; z-index: 10; position: relative; border-radius: 6px; }
@@ -588,7 +670,7 @@ let openTabs = [];
 let activeTab = null;
 
 function handleLinkClick(event, linkElement) {
-    event.preventDefault(); 
+    event.preventDefault();
     const targetName = linkElement.getAttribute('href').substring(1);
     if (!openTabs.includes(targetName)) { openTabs.push(targetName); }
     activateTabAndJump(targetName);
@@ -597,18 +679,18 @@ function handleLinkClick(event, linkElement) {
 function activateTabAndJump(tabName, isFromHistory = false) {
     activeTab = tabName;
     renderTabs();
-    
+
     const targetElement = document.getElementById(tabName);
     if (targetElement) {
         targetElement.scrollIntoView();
         const def = targetElement.querySelector('.definition');
         if (def) {
             def.style.animation = 'none';
-            void def.offsetWidth; 
-            def.style.animation = ''; 
+            void def.offsetWidth;
+            def.style.animation = '';
         }
     }
-    
+
     if (!isFromHistory) {
         location.hash = tabName;
     }
@@ -618,7 +700,7 @@ function closeTab(event, tabName) {
     event.stopPropagation();
     const index = openTabs.indexOf(tabName);
     openTabs = openTabs.filter(t => t !== tabName);
-    
+
     if (activeTab === tabName) {
         if (openTabs.length > 0) {
             activateTabAndJump(openTabs[Math.max(0, index - 1)]);
@@ -638,25 +720,25 @@ function renderTabs() {
     const tabBarWrapper = document.getElementById('tab-bar-wrapper');
     const tabBar = document.getElementById('tab-bar');
     if (openTabs.length === 0) { tabBarWrapper.style.display = 'none'; return; }
-    
+
     tabBarWrapper.style.display = 'block';
     tabBar.innerHTML = '';
-    
+
     openTabs.forEach(tabName => {
         const tabEl = document.createElement('div');
         tabEl.className = 'tab' + (tabName === activeTab ? ' active' : '');
         tabEl.onclick = () => activateTabAndJump(tabName);
-        
+
         const titleSpan = document.createElement('span');
         titleSpan.innerText = tabName;
         tabEl.appendChild(titleSpan);
-        
+
         const closeBtn = document.createElement('span');
         closeBtn.className = 'tab-close';
         closeBtn.innerHTML = '×';
         closeBtn.onclick = (e) => closeTab(e, tabName);
         tabEl.appendChild(closeBtn);
-        
+
         tabBar.appendChild(tabEl);
         if (tabName === activeTab) { tabEl.scrollIntoView({ inline: 'nearest' }); }
     });
@@ -682,7 +764,7 @@ window.addEventListener('hashchange', () => {
     const blob = new Blob([standaloneHtml], { type: 'text/html' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'abnf.html';
+    link.download = 'syntax-dive.html';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
