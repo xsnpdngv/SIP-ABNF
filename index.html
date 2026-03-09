@@ -253,7 +253,9 @@
         <div class="presets">
             <strong>Quick Load:</strong>
             <button class="secondary" onclick="loadPreset('https://raw.githubusercontent.com/xsnpdngv/SIP-ABNF/refs/heads/main/sip.abnf')">SIP (RFC 3261)</button>
+            <button class="secondary" onclick="loadPreset('https://raw.githubusercontent.com/xsnpdngv/SIP-ABNF/refs/heads/main/json.abnf')">JSON (RFC 8259)</button>
             <button class="secondary" onclick="loadPreset('https://raw.githubusercontent.com/xsnpdngv/SIP-ABNF/refs/heads/main/abnf.abnf')">ABNF (RFC 5234)</button>
+            <button class="secondary" onclick="loadPreset('https://raw.githubusercontent.com/xsnpdngv/ASDF-V/refs/heads/main/syntax/asdf.abnf')">ASDF</button>
         </div>
     </div>
 
@@ -478,7 +480,41 @@ function convertSyntax() {
     activeTab = null;
     renderTabs();
 
-    let text = rawText + "\n\n" + coreRulesText;
+    let text = rawText;
+
+    const isEBNF = /::=/.test(rawText);
+
+    if (!isEBNF && coreRulesText) {
+        const defRegex = /^[ \t\xA0]*([a-zA-Z][a-zA-Z0-9_-]*)[ \t\xA0\n\r]*(?:=|\/=|::=|:)/gm;
+        const rawRules = new Set();
+        let m;
+        while ((m = defRegex.exec(rawText)) !== null) {
+            rawRules.add(m[1].toUpperCase());
+        }
+
+        const coreRulesList = new Set();
+        while ((m = defRegex.exec(coreRulesText)) !== null) {
+            coreRulesList.add(m[1].toUpperCase());
+        }
+
+        let cleanText = rawText.replace(/(?<![a-zA-Z])(["'])(?:(?!\1|\n|\r).)*?\1/g, "");
+        cleanText = cleanText.replace(/(^|[ \t\xA0]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, "");
+
+        const identRegex = /(?<![a-zA-Z0-9_-])([a-zA-Z][a-zA-Z0-9_-]*)(?![a-zA-Z0-9_-])/g;
+        let needsCore = false;
+        while ((m = identRegex.exec(cleanText)) !== null) {
+            let token = m[1].toUpperCase();
+            if (!rawRules.has(token) && coreRulesList.has(token)) {
+                needsCore = true;
+                break;
+            }
+        }
+
+        if (needsCore) {
+            text += "\n\n\n" + coreRulesText;
+        }
+    }
+
     text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     let literals = [];
@@ -488,7 +524,8 @@ function convertSyntax() {
     });
 
     const rules = new Set();
-    const defRegex = /^[ \t]*([a-zA-Z][a-zA-Z0-9_-]*)[ \t]*(?:=|\/=|::=|:)/gm;
+    // Allow for NBSP (\xA0) and Multi-line separation between rule name and ::=
+    const defRegex = /^[ \t\xA0]*([a-zA-Z][a-zA-Z0-9_-]*)[ \t\xA0\n\r]*(?:=|\/=|::=|:)/gm;
     let match;
     while ((match = defRegex.exec(text)) !== null) {
         rules.add(match[1]);
@@ -506,28 +543,26 @@ function convertSyntax() {
     });
 
     const definedIds = new Set();
-    const lines = text.split('\n');
 
-    for (let i = 0; i < lines.length; i++) {
-        lines[i] = lines[i].replace(/^[ \t]*<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>([ \t]*(?:=|\/=|::=|:))/,
-            (fullMatch, ruleName, eqPart) => {
-                let idAttr = "";
-                if (!definedIds.has(ruleName)) {
-                    idAttr = `id="${ruleName}"`;
-                    definedIds.add(ruleName);
-                }
-                return `<span ${idAttr} class="rule-wrapper"><span class="definition">${ruleName}</span></span>${eqPart}`;
+    // respect newlines and non-breaking spaces
+    text = text.replace(
+        /(^[ \t\xA0]*)<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>([ \t\xA0\n\r]*(?:=|\/=|::=|:))/gm,
+        (fullMatch, leadingSpace, ruleName, eqPart) => {
+            let idAttr = "";
+            if (!definedIds.has(ruleName)) {
+                idAttr = `id="${ruleName}"`;
+                definedIds.add(ruleName);
             }
-        );
+            return `${leadingSpace}<span ${idAttr} class="rule-wrapper"><span class="definition">${ruleName}</span></span>${eqPart}`;
+        }
+    );
 
-        lines[i] = lines[i].replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g,
-            (fullMatch, ruleRef) => {
-                return `<a href="#${ruleRef}" class="reference" onclick="handleLinkClick(event, this)">${ruleRef}</a>`;
-            }
-        );
-    }
-
-    text = lines.join('\n');
+    // Convert remainder of temp-tokens to standard references
+    text = text.replace(/<span class="temp-token" data-rule="([^"]+)">[^<]+<\/span>/g,
+        (fullMatch, ruleRef) => {
+            return `<a href="#${ruleRef}" class="reference" onclick="handleLinkClick(event, this)">${ruleRef}</a>`;
+        }
+    );
 
     text = text.replace(/%([bBdDxX])([0-9a-fA-F]+(?:-[0-9a-fA-F]+|(?:\.[0-9a-fA-F]+)*)?)/g, (fullMatch, baseChar, valStr) => {
         let base = baseChar.toLowerCase() === 'x' ? 16 : (baseChar.toLowerCase() === 'd' ? 10 : 2);
@@ -552,10 +587,9 @@ function convertSyntax() {
         return `<span class="value" data-hint="${safeHint}">${fullMatch}</span>`;
     });
 
-    // Safely parse specification links only inside comments
-    text = text.replace(/(^|[ \t]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (commentMatch, leadingSpace, abnfComment, cComment, pascalComment) => {
+    // Parse comments and external specification links safely
+    text = text.replace(/(^|[ \t\xA0]+)(;.*$)|(\/\*[\s\S]*?\*\/)|(\(\*[\s\S]*?\*\))/gm, (commentMatch, leadingSpace, abnfComment, cComment, pascalComment) => {
         const processSpecs = (str) => {
-            // Match RFCs with intelligent branching for Section, Chapter, Appendix, or pure numeric shorthand
             let processed = str.replace(/RFC\s*(\d+)(?:\s*(?:(?:[-:/]\s*)?(?:see\s+)?(Section|Chapter|Appendix)\s+([a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)|(?:[-:/]\s*(?:see\s+)?)([0-9]+(?:\.[0-9]+)*)))?/gi, (rfcMatch, rfcNum, keyword, idWithKeyword, idWithoutKeyword) => {
                 let url = `https://datatracker.ietf.org/doc/html/rfc${rfcNum}`;
                 let id = idWithKeyword || idWithoutKeyword;
